@@ -5,6 +5,7 @@
 """
 
 import time
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -15,7 +16,7 @@ import streamlit.components.v1 as components
 # ─────────────────────────────────────────────
 # 基本設定
 # ─────────────────────────────────────────────
-APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B：情緒導向式部位特徵提示"
+APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B"
 OUTPUT_CSV = Path("annotation_version_b.csv")
 BASE_DIR = Path(__file__).resolve().parent
 ANNOTATION_DIR = BASE_DIR / "annotations"
@@ -307,6 +308,9 @@ DATA_COLUMNS = [
     "prior_knowledge_group",
     "image_id",
     "difficulty",
+    "annotation_started_at",
+    "annotation_submitted_at",
+    "annotation_time_seconds",
     "condition",
     "final_emotion",
     "confidence",
@@ -462,6 +466,7 @@ def init_state():
         "prior_knowledge_group": "",
         "image_index": 0,
         "task_start_time": None,
+        "task_start_datetime": "",
         "pending_records": [],
         "final_records": [],
         "cloud_sync_attempted": False,
@@ -498,8 +503,20 @@ def do_scroll():
         )
 
 
+def current_timestamp():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
 def reset_timer():
     st.session_state.task_start_time = time.time()
+    st.session_state.task_start_datetime = current_timestamp()
+
+
+def get_elapsed_seconds():
+    start_time = st.session_state.get("task_start_time")
+    if start_time is None:
+        return ""
+    return round(time.time() - start_time, 2)
 
 
 def current_image():
@@ -599,13 +616,9 @@ def render_emotion_feature_hint(final_emotion):
 # 頁面 1：首頁
 # ─────────────────────────────────────────────
 def render_intro():
-    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown('<div class="version-badge">版本 B</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">🐱 家貓情緒標註研究</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="sub-title">版本 B：請先選擇主要情緒，系統會依據您所選情緒顯示可能出現的部位特徵。'
-        '接著請從完整特徵清單中勾選照片中實際觀察到、且能支持判斷的特徵。</div>',
-        unsafe_allow_html=True,
-    )
+    
 
     annotator_id = st.text_input("受試者學號／代號", value=st.session_state.annotator_id)
     st.session_state.annotator_id = annotator_id.strip()
@@ -907,10 +920,16 @@ def render_task():
     )
 
     if st.button("送出此張標註 →", type="primary", disabled=not required_ok):
+        annotation_submitted_at = current_timestamp()
+        annotation_time_seconds = get_elapsed_seconds()
+
         record = {
             **base_fields(),
             "image_id": image["image_id"],
             "difficulty": image["difficulty"],
+            "annotation_started_at": st.session_state.get("task_start_datetime", ""),
+            "annotation_submitted_at": annotation_submitted_at,
+            "annotation_time_seconds": annotation_time_seconds,
             "condition": "情緒導向式部位特徵提示",
             "final_emotion": final_emotion,
             "confidence": confidence,
