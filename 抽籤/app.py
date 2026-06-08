@@ -5,7 +5,7 @@ import streamlit as st
 # =========================
 # 基本設定
 # =========================
-APP_TITLE = "實驗分組抽籤"
+APP_TITLE = "家貓情緒研究｜實驗分組抽籤"
 
 ASSIGNMENT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxvacTvKldHZhZwYElBHi9F8KzTM3OFEhJy1r5ZaGVDa48a7jOHBfVL2cI3B1VtTYZA/exec"
 ASSIGNMENT_SECRET = "hci_group_assignment_secret"
@@ -472,9 +472,8 @@ st.markdown(
     <div class="rule-card">
         <b>分組規則</b><br>
         1. 系統在 A 組與 B 組之間分配，盡量維持兩組總人數平衡。<br>
-        2. 本版本不再限制每小時人數，會以所有已登記資料作為分組依據。<br>
-        3. 相同受試者代號若已分配過，會直接回傳原本分配結果。<br>
-        4. 請確認代號輸入正確，避免重複或錯誤分配。
+        2. 相同受試者代號若已分配過，會直接回傳原本分配結果。<br>
+        3. 請確認代號輸入正確，避免重複或錯誤分配。
     </div>
     """,
     unsafe_allow_html=True,
@@ -576,4 +575,3 @@ if result:
             )
 
 st.markdown("</div>", unsafe_allow_html=True)
-
