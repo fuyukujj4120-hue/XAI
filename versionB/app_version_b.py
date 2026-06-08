@@ -327,7 +327,7 @@ DATA_COLUMNS = [
 # ─────────────────────────────────────────────
 # 頁面設定 & CSS
 # ─────────────────────────────────────────────
-st.set_page_config(page_title=APP_PAGE_TITLE, layout="wide")
+st.set_page_config(page_title=APP_PAGE_TITLE, layout="wide", initial_sidebar_state="collapsed")
 st.markdown(
     """
 <style>
@@ -391,13 +391,45 @@ h4 { font-size: 14px !important; color: #a04000 !important; margin-top: 12px !im
     display: flex; align-items: center; justify-content: center;
     color: #c0874a; font-size: 15px; text-align: center; padding: 20px;
 }
+/* 手機版友善 sidebar：預設可收合，不強制固定 460px */
 section[data-testid="stSidebar"] {
-    width: 460px !important; min-width: 460px !important;
-    background: #fdf6ed !important; border-right: 1px solid #f5cba7;
+    width: min(88vw, 460px) !important;
+    min-width: 0 !important;
+    max-width: min(88vw, 460px) !important;
+    background: #fdf6ed !important;
+    border-right: 1px solid #f5cba7;
 }
+
 section[data-testid="stSidebar"] img {
-    max-height: 460px; object-fit: contain; border-radius: 8px;
+    width: 100% !important;
+    max-height: 55vh;
+    object-fit: contain;
+    border-radius: 8px;
     box-shadow: 0 2px 12px rgba(231,76,60,0.12);
+}
+
+/* 手機螢幕再縮小 sidebar 寬度，避免照片區蓋滿畫面 */
+@media (max-width: 768px) {
+    section[data-testid="stSidebar"] {
+        width: 86vw !important;
+        min-width: 0 !important;
+        max-width: 86vw !important;
+    }
+
+    section[data-testid="stSidebar"] img {
+        max-height: 45vh;
+    }
+
+    .main-title {
+        font-size: 21px;
+    }
+
+    .sub-title,
+    .info-card,
+    .feature-hint-card,
+    .bias-card {
+        font-size: 13px;
+    }
 }
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #e67e22 0%, #c0392b 100%) !important;
