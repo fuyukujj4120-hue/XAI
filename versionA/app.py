@@ -25,8 +25,9 @@ import streamlit.components.v1 as components
 APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 A"
 OUTPUT_CSV = Path("annotation_version_a.csv")
 BASE_DIR = Path(__file__).resolve().parent
-ANNOTATION_DIR = BASE_DIR / "annotations"
-IMAGE_DIR = BASE_DIR / "imgaes"  # 依照目前資料夾名稱：imgaes
+PROJECT_ROOT = BASE_DIR.parent
+ANNOTATION_DIR = PROJECT_ROOT / "annotations"
+IMAGE_DIR = PROJECT_ROOT / "imgaes"  # 依照目前資料夾名稱：imgaes
 
 SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxNvaZl8movCnWa3iaJt-yOg9kJAWkAMK_ESWGa9H9Ttkc97gWIeQxb8mDjCkWSg0Lnw/exec"
 SHEET_SECRET = "hci_cat_annotation_secret"
