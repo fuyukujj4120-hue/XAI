@@ -69,15 +69,15 @@ UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存",
 
 # ─────────────────────────────────────────────
 # Step 2 專用：情緒導向式部位特徵提示
-# 注意：這裡不放「無法辨識」和「其他」
+# 這裡只顯示文獻整理後的可能特徵，不放「無法辨識」和「其他」
 # ─────────────────────────────────────────────
 EMOTION_FEATURE_HINTS = {
     "害怕": {
         "眼睛": [
             "睜大",
+            "瞳孔放大",
             "半睜",
             "緊閉",
-            "瞳孔放大",
             "避免眼神接觸",
         ],
         "耳朵": [
@@ -95,6 +95,7 @@ EMOTION_FEATURE_HINTS = {
             "發抖／僵硬",
         ],
     },
+
     "憤怒": {
         "眼睛": [
             "瞳孔放大",
@@ -108,12 +109,14 @@ EMOTION_FEATURE_HINTS = {
             "快速甩動",
         ],
         "身體／姿勢": [
+            "炸毛",
             "前傾",
             "拱背",
-            "炸毛",
             "緊繃",
+            "攻擊姿勢",
         ],
     },
+
     "歡樂/玩耍": {
         "眼睛": [
             "瞳孔放大",
@@ -126,10 +129,12 @@ EMOTION_FEATURE_HINTS = {
             "豎起",
         ],
         "身體／姿勢": [
-            "拱背",
             "姿勢變化頻繁",
+            "拱背",
+            "遊戲行為",
         ],
     },
+
     "滿意": {
         "眼睛": [
             "半睜",
@@ -143,15 +148,20 @@ EMOTION_FEATURE_HINTS = {
         ],
         "身體／姿勢": [
             "放鬆",
+            "坐姿",
+            "蜷曲躺臥",
+            "伸展",
+            "梳理",
+            "踩踏",
         ],
     },
+
     "好奇": {
         "眼睛": [
             "瞳孔放大",
             "直視",
         ],
         "耳朵": [
-            "直立",
             "朝向刺激物",
         ],
         "尾巴": [
@@ -160,33 +170,70 @@ EMOTION_FEATURE_HINTS = {
         ],
         "身體／姿勢": [
             "前傾",
+            "前肢倚靠",
+            "頭往前伸",
+            "探索",
+            "嗅聞",
         ],
     },
 }
 
 # ─────────────────────────────────────────────
-# Step 3 專用：勾選區自動加上「無法辨識」和「其他」
+# Step 3 專用：全部特徵選項
+# 不依情緒限制，所有部位特徵都可選
 # ─────────────────────────────────────────────
-def add_uncertain_options(feature_dict):
-    result = {}
-
-    for group_name, options in feature_dict.items():
-        new_options = list(options)
-
-        if "無法辨識" not in new_options:
-            new_options.append("無法辨識")
-
-        if "其他" not in new_options:
-            new_options.append("其他")
-
-        result[group_name] = new_options
-
-    return result
-
-
-EMOTION_FEATURE_CHOICES = {
-    emotion: add_uncertain_options(feature_dict)
-    for emotion, feature_dict in EMOTION_FEATURE_HINTS.items()
+FEATURE_OPTIONS = {
+    "眼睛": [
+        "睜大",
+        "半睜",
+        "緊閉",
+        "瞳孔放大",
+        "直視",
+        "避免眼神接觸",
+        "無法辨識",
+        "其他",
+    ],
+    "耳朵": [
+        "直立",
+        "朝向刺激物",
+        "側向",
+        "壓平",
+        "無法辨識",
+        "其他",
+    ],
+    "尾巴": [
+        "豎起",
+        "水平",
+        "放鬆",
+        "夾起",
+        "壓低僵硬",
+        "快速甩動",
+        "無法辨識",
+        "其他",
+    ],
+    "身體／姿勢": [
+        "放鬆",
+        "緊繃",
+        "壓低",
+        "前傾",
+        "拱背",
+        "炸毛",
+        "發抖／僵硬",
+        "姿勢變化頻繁",
+        "攻擊姿勢",
+        "遊戲行為",
+        "坐姿",
+        "蜷曲躺臥",
+        "伸展",
+        "梳理",
+        "踩踏",
+        "前肢倚靠",
+        "頭往前伸",
+        "探索",
+        "嗅聞",
+        "無法辨識",
+        "其他",
+    ],
 }
 
 # ─────────────────────────────────────────────
@@ -509,7 +556,6 @@ def build_feature_str(selections, group_name, other_texts):
 
 def render_emotion_feature_hint(final_emotion):
     hint_options = EMOTION_FEATURE_HINTS.get(final_emotion, {})
-    choice_options = EMOTION_FEATURE_CHOICES.get(final_emotion, {})
 
     hint_lines = []
 
@@ -517,7 +563,7 @@ def render_emotion_feature_hint(final_emotion):
         if options:
             hint_lines.append(f"&nbsp;&nbsp;<b>{group_name}</b>：{'、'.join(options)}")
 
-    return choice_options, hint_lines
+    return hint_lines
 
 
 # ─────────────────────────────────────────────
@@ -528,7 +574,7 @@ def render_intro():
     st.markdown('<div class="main-title">🐱 家貓情緒標註研究</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">版本 B：請先選擇主要情緒，系統會依據您所選情緒顯示可能出現的部位特徵。'
-        '請只勾選照片中實際觀察到、且能支持判斷的特徵。</div>',
+        '接著請從完整特徵清單中勾選照片中實際觀察到、且能支持判斷的特徵。</div>',
         unsafe_allow_html=True,
     )
 
@@ -668,7 +714,7 @@ def render_task():
     st.markdown(
         f'<div class="info-card" style="border-left-color:#e67e22;">'
         f'請先觀看左側照片並選擇主要情緒。系統接著會依據您所選的情緒，'
-        f'顯示該情緒可能出現的部位特徵。請只勾選照片中實際可觀察到的特徵。<br>'
+        f'顯示該情緒可能出現的部位特徵。接著請從完整特徵清單中勾選實際可觀察到的特徵。<br>'
         f'<b>第 {idx + 1} / {len(IMAGES)} 張</b></div>',
         unsafe_allow_html=True,
     )
@@ -707,7 +753,7 @@ def render_task():
     st.markdown("## Step 2：閱讀所選情緒的部位特徵提示")
 
     if final_emotion and final_emotion not in ["中性", "其他／無法判斷"]:
-        current_feature_options, hint_lines = render_emotion_feature_hint(final_emotion)
+        hint_lines = render_emotion_feature_hint(final_emotion)
 
         st.markdown(
             f"""<div class="feature-hint-card">
@@ -731,68 +777,60 @@ def render_task():
             系統提供的特徵只是「可能出現」的觀察方向，並不代表照片中一定存在這些特徵。
             請不要因為看到提示就勾選該特徵。請只勾選照片中
             <b>實際可觀察到</b>，且您認為能支持情緒判斷的特徵。
-            若照片中沒有出現、看不清楚或無法判斷，請在下一步勾選「無法辨識」，
-            或於「其他」與補充說明中說明。
+            若提示中沒有列出，但您認為照片中有其他支持判斷的特徵，請在下一步選擇「其他」並補充說明。
             </div>""",
             unsafe_allow_html=True,
         )
 
     elif final_emotion in ["中性", "其他／無法判斷"]:
-        current_feature_options = {}
         st.info(
             "您選擇的是「中性」或「其他／無法判斷」，因此系統不提供特定情緒部位特徵提示。"
-            "請直接填寫後續信心、難度與提示幫助程度。"
+            "但下一步仍可依照片情況勾選可觀察到的部位特徵，或選擇「無法辨識／其他」。"
         )
 
     else:
-        current_feature_options = {}
         st.info("請先選擇主要情緒，系統才會顯示對應的部位特徵提示。")
 
-    # ── Step 3：勾選部位特徵 ──
+    # ── Step 3：不依情緒限制，全部特徵皆可選 ──
     feature_selections = {}
     feature_other_texts = {}
 
-    if current_feature_options:
-        st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
-        st.caption(
-            "請勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。"
-            "若該部位看不清楚，請選擇「無法辨識」；若有提示未列出的特徵，請選擇「其他」並補充說明。"
-        )
+    st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
+    st.caption(
+        "請從完整特徵清單中，勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。"
+        "若該部位看不清楚，請選擇「無法辨識」；若有清單未列出的特徵，請選擇「其他」並補充說明。"
+    )
 
-        col_left, col_right = st.columns(2)
-        feature_items = list(current_feature_options.items())
+    col_left, col_right = st.columns(2)
+    feature_items = list(FEATURE_OPTIONS.items())
 
-        for i, (group_name, options) in enumerate(feature_items):
-            target_col = col_left if i % 2 == 0 else col_right
+    for i, (group_name, options) in enumerate(feature_items):
+        target_col = col_left if i % 2 == 0 else col_right
 
-            with target_col:
-                st.markdown(
-                    f'<div class="feature-group"><div class="feature-group-title">{group_name}</div>',
-                    unsafe_allow_html=True,
+        with target_col:
+            st.markdown(
+                f'<div class="feature-group"><div class="feature-group-title">{group_name}</div>',
+                unsafe_allow_html=True,
+            )
+
+            selected = st.multiselect(
+                f"觀察到的{group_name}特徵",
+                options,
+                key=f"{prefix}_feat_{group_name}",
+                label_visibility="collapsed",
+            )
+            feature_selections[group_name] = selected
+
+            if "其他" in selected:
+                other_text = st.text_input(
+                    f"請補充{group_name}其他特徵",
+                    key=f"{prefix}_feat_other_{group_name}",
                 )
+                feature_other_texts[group_name] = other_text
+            else:
+                feature_other_texts[group_name] = ""
 
-                selected = st.multiselect(
-                    f"觀察到的{group_name}特徵",
-                    options,
-                    key=f"{prefix}_feat_{group_name}",
-                    label_visibility="collapsed",
-                )
-                feature_selections[group_name] = selected
-
-                if "其他" in selected:
-                    other_text = st.text_input(
-                        f"請補充{group_name}其他特徵",
-                        key=f"{prefix}_feat_other_{group_name}",
-                    )
-                    feature_other_texts[group_name] = other_text
-                else:
-                    feature_other_texts[group_name] = ""
-
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    else:
-        st.markdown("## Step 3：部位特徵提示")
-        st.info("此情緒類別不提供特定部位特徵提示，因此本步驟不需勾選部位特徵。")
+            st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Step 4：一起填寫信心、難度與提示幫助程度 ──
     st.markdown("## Step 4：填寫標註信心、判斷難度與提示幫助程度")
