@@ -752,7 +752,7 @@ def render_task():
         f"""
         <div class="info-card" style="border-left-color:#e67e22;">
             請先觀看左側照片並選擇主要情緒。<br>
-            系統接著會依據您所選的情緒，顯示該情緒可能出現的部位特徵提示。<br>
+            系統會依據您所選的情緒，顯示該情緒可能出現的部位特徵提示。<br>
             接著請從完整特徵清單中勾選實際可觀察到的特徵。<br><br>
             <b>第 {idx + 1} / {len(IMAGES)} 張</b>
         </div>
