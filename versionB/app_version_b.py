@@ -52,7 +52,6 @@ EMOTION_ICONS = {
     "滿意": "😽",
     "好奇": "🐾",
     "中性": "➖",
-    "其他／無法判斷": "❓",
 }
 
 EMOTION_DEFINITIONS = {
@@ -62,7 +61,6 @@ EMOTION_DEFINITIONS = {
     "滿意": "由需求和願望得到滿足而產生的正向情緒狀態，表現為休息、平靜和親和。",
     "好奇": "由新奇或顯著刺激引起，表現為注意、定向或探索行為。",
     "中性": "無任何明顯情緒特徵，整體狀態平穩，未呈現明確的害怕、憤怒、歡樂／玩耍、滿意或好奇線索。",
-    "其他／無法判斷": "影像品質不足、線索不足、多種情緒並存或超出現有分類。",
 }
 
 UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類"]
@@ -329,7 +327,7 @@ DATA_COLUMNS = [
 # ─────────────────────────────────────────────
 # 頁面設定 & CSS
 # ─────────────────────────────────────────────
-st.set_page_config(page_title=APP_PAGE_TITLE, layout="wide")
+st.set_page_config(page_title=APP_PAGE_TITLE, layout="wide", initial_sidebar_state="collapsed")
 st.markdown(
     """
 <style>
@@ -393,24 +391,43 @@ h4 { font-size: 14px !important; color: #a04000 !important; margin-top: 12px !im
     display: flex; align-items: center; justify-content: center;
     color: #c0874a; font-size: 15px; text-align: center; padding: 20px;
 }
-/* 手機版友善照片區：不用 sidebar，照片在主畫面 expander 中可收合 */
-div[data-testid="stImage"] img {
-    max-height: 62vh;
+/* 手機版友善 sidebar：預設可收合，不強制固定 460px */
+section[data-testid="stSidebar"] {
+    width: min(88vw, 460px) !important;
+    min-width: 0 !important;
+    max-width: min(88vw, 460px) !important;
+    background: #fdf6ed !important;
+    border-right: 1px solid #f5cba7;
+}
+
+section[data-testid="stSidebar"] img {
+    width: 100% !important;
+    max-height: 55vh;
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(231,76,60,0.12);
 }
+
+/* 手機螢幕再縮小 sidebar 寬度，避免照片區蓋滿畫面 */
 @media (max-width: 768px) {
-    div[data-testid="stImage"] img {
-        max-height: 48vh;
+    section[data-testid="stSidebar"] {
+        width: 86vw !important;
+        min-width: 0 !important;
+        max-width: 86vw !important;
     }
-    .placeholder {
-        height: 260px;
+
+    section[data-testid="stSidebar"] img {
+        max-height: 45vh;
     }
+
     .main-title {
         font-size: 21px;
     }
-    .sub-title, .info-card, .feature-hint-card, .bias-card {
+
+    .sub-title,
+    .info-card,
+    .feature-hint-card,
+    .bias-card {
         font-size: 13px;
     }
 }
@@ -680,16 +697,23 @@ def render_background():
 # ─────────────────────────────────────────────
 # 頁面 3：照片標註
 # ─────────────────────────────────────────────
-def render_photo_panel():
-    image = current_image()
+def render_sidebar():
+    with st.sidebar:
+        image = current_image()
 
-    if image is None:
-        st.info("所有照片已完成標註。")
-        return
+        st.markdown(
+            '<div class="version-badge" style="margin-bottom:10px;">版本 B：情緒導向式特徵提示</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("### 家貓照片")
 
-    idx = st.session_state.image_index
+        if image is None:
+            st.info("所有照片已完成標註。")
+            return
 
-    with st.expander(f"📷 查看家貓照片｜第 {idx + 1} / {len(IMAGES)} 張", expanded=True):
+        idx = st.session_state.image_index
+        st.caption(f"第 {idx + 1} / {len(IMAGES)} 張｜{image['image_id']}")
+
         path = image.get("path", "")
 
         if path and Path(path).exists():
@@ -700,15 +724,16 @@ def render_photo_panel():
                 unsafe_allow_html=True,
             )
 
-        st.caption("可點擊上方標題收合照片區；手機版也可直接收起照片後繼續填答。")
+        st.markdown("---")
+        st.markdown("**📖 情緒定義**")
 
-        with st.expander("📖 情緒定義快速查看", expanded=False):
-            for emo, defn in EMOTION_DEFINITIONS.items():
-                st.markdown(f"**{EMOTION_ICONS.get(emo, '')} {emo}**：{defn}")
+        for emo, defn in EMOTION_DEFINITIONS.items():
+            with st.expander(f"{EMOTION_ICONS.get(emo, '')} {emo}", expanded=False):
+                st.caption(defn)
 
 
 def render_task():
-    render_photo_panel()
+    render_sidebar()
 
     image = current_image()
 
@@ -725,7 +750,7 @@ def render_task():
     st.markdown('<div class="main-title">🐱 家貓情緒標註</div>', unsafe_allow_html=True)
     st.markdown(
         f'<div class="info-card" style="border-left-color:#e67e22;">'
-        f'請先觀看上方照片並選擇主要情緒。系統接著會依據您所選的情緒，'
+        f'請先觀看左側照片並選擇主要情緒。系統接著會依據您所選的情緒，'
         f'顯示該情緒可能出現的部位特徵。接著請從完整特徵清單中勾選實際可觀察到的特徵。<br>'
         f'<b>第 {idx + 1} / {len(IMAGES)} 張</b></div>',
         unsafe_allow_html=True,
