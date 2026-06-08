@@ -16,8 +16,8 @@ GROUP_APP_URLS = {
 }
 
 GROUP_LABELS = {
-    "A": "A 組｜特徵導向 → 情緒導向",
-    "B": "B 組｜情緒導向 → 特徵導向",
+    "A": "A 組",
+    "B": "B 組",
 }
 
 # 不再使用每小時限制。若後端 Apps Script 仍要求 limit 欄位，傳入極大值作為不限制。
