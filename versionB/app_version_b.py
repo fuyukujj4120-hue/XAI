@@ -1,7 +1,7 @@
 """
 家貓情緒標註研究系統
-版本 B：有部位特徵提示
-流程：受試者基本資料 → 照片標註（情緒導向式特徵提示）→ 整體反饋 → 完成
+版本 B：情緒導向式部位特徵提示
+流程：受試者基本資料 → 照片標註（先選情緒，再顯示對應特徵提示）→ 整體反饋 → 完成
 """
 
 import time
@@ -15,7 +15,7 @@ import streamlit.components.v1 as components
 # ─────────────────────────────────────────────
 # 基本設定
 # ─────────────────────────────────────────────
-APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B：有部位特徵提示"
+APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B：情緒導向式部位特徵提示"
 OUTPUT_CSV = Path("annotation_version_b.csv")
 BASE_DIR = Path(__file__).resolve().parent
 ANNOTATION_DIR = BASE_DIR / "annotations"
@@ -24,12 +24,12 @@ SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxNvaZl8movCnWa3ia
 SHEET_SECRET = "hci_cat_annotation_secret"
 
 # ─────────────────────────────────────────────
-# 照片清單（請依實際路徑修改）
+# 照片清單
 # ─────────────────────────────────────────────
 IMAGES = [
-    {"image_id": "cat_easy",   "difficulty": "易", "path": str(ANNOTATION_DIR / "cat_easy.jpg")},
+    {"image_id": "cat_easy", "difficulty": "易", "path": str(ANNOTATION_DIR / "cat_easy.jpg")},
     {"image_id": "cat_medium", "difficulty": "中", "path": str(ANNOTATION_DIR / "cat_medium.jpg")},
-    {"image_id": "cat_hard",   "difficulty": "難", "path": str(ANNOTATION_DIR / "cat_hard.jpg")},
+    {"image_id": "cat_hard", "difficulty": "難", "path": str(ANNOTATION_DIR / "cat_hard.jpg")},
 ]
 
 # ─────────────────────────────────────────────
@@ -61,100 +61,132 @@ EMOTION_DEFINITIONS = {
     "歡樂/玩耍": "表現為非功能性行為，包括運動遊戲、社交遊戲或物件遊戲。",
     "滿意": "由需求和願望得到滿足而產生的正向情緒狀態，表現為休息、平靜和親和。",
     "好奇": "由新奇或顯著刺激引起，表現為注意、定向或探索行為。",
-    "中性": "不明顯屬於特定情緒，偏中性、休息或日常活動的狀態。",
+    "中性": "無任何明顯情緒特徵，整體狀態平穩，未呈現明確的害怕、憤怒、歡樂／玩耍、滿意或好奇線索。",
     "其他／無法判斷": "影像品質不足、線索不足、多種情緒並存或超出現有分類。",
 }
 
 UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類", "其他"]
 
 # ─────────────────────────────────────────────
-# 版本 B：全部部位特徵選項（備用）
-# ─────────────────────────────────────────────
-FEATURE_OPTIONS = {
-    "眼睛": [
-        "睜大",
-        "半睜／放鬆",
-        "緊閉",
-        "瞳孔放大",
-        "直視",
-        "避免眼神接觸",
-        "無法辨識",
-        "其他",
-    ],
-    "耳朵": [
-        "直立",
-        "朝向刺激物",
-        "側向",
-        "壓平",
-        "無法辨識",
-        "其他",
-    ],
-    "尾巴": [
-        "豎起",
-        "水平",
-        "放鬆",
-        "夾起",
-        "壓低僵硬",
-        "快速甩動",
-        "無法辨識",
-        "其他",
-    ],
-    "身體／姿勢": [
-        "放鬆",
-        "緊繃",
-        "壓低",
-        "前傾",
-        "拱背",
-        "炸毛",
-        "發抖／僵硬",
-        "姿勢變化頻繁",
-        "無法辨識",
-        "其他",
-    ],
-}
-
-# ─────────────────────────────────────────────
-# 情緒導向式部位特徵提示
-# 受試者先選情緒，再顯示該情緒可能出現的特徵
+# Step 2 專用：情緒導向式部位特徵提示
+# 注意：這裡不放「無法辨識」和「其他」
 # ─────────────────────────────────────────────
 EMOTION_FEATURE_HINTS = {
     "害怕": {
-        "眼睛": ["睜大", "瞳孔放大", "直視", "避免眼神接觸", "無法辨識", "其他"],
-        "耳朵": ["側向", "壓平", "無法辨識", "其他"],
-        "尾巴": ["夾起", "壓低僵硬", "快速甩動", "無法辨識", "其他"],
-        "身體／姿勢": ["緊繃", "壓低", "拱背", "炸毛", "發抖／僵硬", "無法辨識", "其他"],
+        "眼睛": [
+            "睜大",
+            "半睜",
+            "緊閉",
+            "瞳孔放大",
+            "避免眼神接觸",
+        ],
+        "耳朵": [
+            "側向",
+            "壓平",
+        ],
+        "尾巴": [
+            "夾起",
+        ],
+        "身體／姿勢": [
+            "緊繃",
+            "壓低",
+            "拱背",
+            "炸毛",
+            "發抖／僵硬",
+        ],
     },
     "憤怒": {
-        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
-        "耳朵": ["側向", "壓平", "無法辨識", "其他"],
-        "尾巴": ["快速甩動", "壓低僵硬", "水平", "無法辨識", "其他"],
-        "身體／姿勢": ["緊繃", "前傾", "拱背", "炸毛", "姿勢變化頻繁", "無法辨識", "其他"],
+        "眼睛": [
+            "瞳孔放大",
+            "直視",
+        ],
+        "耳朵": [
+            "側向",
+        ],
+        "尾巴": [
+            "壓低僵硬",
+            "快速甩動",
+        ],
+        "身體／姿勢": [
+            "前傾",
+            "拱背",
+            "炸毛",
+            "緊繃",
+        ],
     },
     "歡樂/玩耍": {
-        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
-        "耳朵": ["直立", "朝向刺激物", "無法辨識", "其他"],
-        "尾巴": ["豎起", "水平", "快速甩動", "無法辨識", "其他"],
-        "身體／姿勢": ["放鬆", "前傾", "姿勢變化頻繁", "無法辨識", "其他"],
+        "眼睛": [
+            "瞳孔放大",
+            "半睜",
+        ],
+        "耳朵": [
+            "直立",
+        ],
+        "尾巴": [
+            "豎起",
+        ],
+        "身體／姿勢": [
+            "拱背",
+            "姿勢變化頻繁",
+        ],
     },
     "滿意": {
-        "眼睛": ["半睜／放鬆", "緊閉", "無法辨識", "其他"],
-        "耳朵": ["直立", "側向", "無法辨識", "其他"],
-        "尾巴": ["放鬆", "水平", "無法辨識", "其他"],
-        "身體／姿勢": ["放鬆", "無法辨識", "其他"],
+        "眼睛": [
+            "半睜",
+        ],
+        "耳朵": [
+            "直立",
+        ],
+        "尾巴": [
+            "放鬆",
+            "豎起",
+        ],
+        "身體／姿勢": [
+            "放鬆",
+        ],
     },
     "好奇": {
-        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
-        "耳朵": ["直立", "朝向刺激物", "無法辨識", "其他"],
-        "尾巴": ["豎起", "水平", "無法辨識", "其他"],
-        "身體／姿勢": ["前傾", "姿勢變化頻繁", "無法辨識", "其他"],
+        "眼睛": [
+            "瞳孔放大",
+            "直視",
+        ],
+        "耳朵": [
+            "直立",
+            "朝向刺激物",
+        ],
+        "尾巴": [
+            "水平",
+            "豎起",
+        ],
+        "身體／姿勢": [
+            "前傾",
+        ],
     },
-    "中性": {
-        "眼睛": ["半睜／放鬆", "直視", "無法辨識", "其他"],
-        "耳朵": ["直立", "側向", "無法辨識", "其他"],
-        "尾巴": ["放鬆", "水平", "無法辨識", "其他"],
-        "身體／姿勢": ["放鬆", "無法辨識", "其他"],
-    },
-    "其他／無法判斷": FEATURE_OPTIONS,
+}
+
+# ─────────────────────────────────────────────
+# Step 3 專用：勾選區自動加上「無法辨識」和「其他」
+# ─────────────────────────────────────────────
+def add_uncertain_options(feature_dict):
+    result = {}
+
+    for group_name, options in feature_dict.items():
+        new_options = list(options)
+
+        if "無法辨識" not in new_options:
+            new_options.append("無法辨識")
+
+        if "其他" not in new_options:
+            new_options.append("其他")
+
+        result[group_name] = new_options
+
+    return result
+
+
+EMOTION_FEATURE_CHOICES = {
+    emotion: add_uncertain_options(feature_dict)
+    for emotion, feature_dict in EMOTION_FEATURE_HINTS.items()
 }
 
 # ─────────────────────────────────────────────
@@ -244,7 +276,8 @@ DATA_COLUMNS = [
 # 頁面設定 & CSS
 # ─────────────────────────────────────────────
 st.set_page_config(page_title=APP_PAGE_TITLE, layout="wide")
-st.markdown("""
+st.markdown(
+    """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
 html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
@@ -334,7 +367,9 @@ section[data-testid="stSidebar"] img {
 .complete-tip { font-size: 12.5px; color: #1a8a4a; font-weight: 600; margin: 6px 0 14px 0; }
 hr { border-color: #f5cba7 !important; margin: 16px 0 !important; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ─────────────────────────────────────────────
 # 工具函式
@@ -356,6 +391,7 @@ def init_state():
         "cloud_sync_attempted": False,
         "last_save_message": "",
     }
+
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
@@ -399,6 +435,7 @@ def compute_group():
     exp = st.session_state.has_cat_experience
     score = st.session_state.cat_understanding_score or 0
     emotion_knowledge = st.session_state.cat_emotion_basic_knowledge
+
     return "高先備知識" if (exp == "是" or score >= 4 or emotion_knowledge == "是") else "低先備知識"
 
 
@@ -421,9 +458,11 @@ def save_records(records):
 
     if OUTPUT_CSV.exists():
         df_old = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
+
         for col in DATA_COLUMNS:
             if col not in df_old.columns:
                 df_old[col] = ""
+
         df_all = pd.concat([df_old[DATA_COLUMNS], df_new], ignore_index=True)
     else:
         df_all = df_new
@@ -443,6 +482,7 @@ def sync_to_cloud(rows):
     resp.raise_for_status()
 
     data = resp.json()
+
     if not data.get("ok"):
         raise ValueError(data.get("error", "Unknown error"))
 
@@ -451,10 +491,12 @@ def sync_to_cloud(rows):
 
 def build_feature_str(selections, group_name, other_texts):
     sel = selections.get(group_name, [])
+
     if not sel:
         return ""
 
     parts = []
+
     for s in sel:
         if s == "其他":
             extra = other_texts.get(group_name, "").strip()
@@ -466,15 +508,16 @@ def build_feature_str(selections, group_name, other_texts):
 
 
 def render_emotion_feature_hint(final_emotion):
-    current_feature_options = EMOTION_FEATURE_HINTS.get(final_emotion, FEATURE_OPTIONS)
+    hint_options = EMOTION_FEATURE_HINTS.get(final_emotion, {})
+    choice_options = EMOTION_FEATURE_CHOICES.get(final_emotion, {})
 
     hint_lines = []
-    for group_name, options in current_feature_options.items():
-        visible_options = [opt for opt in options if opt not in ["無法辨識", "其他"]]
-        if visible_options:
-            hint_lines.append(f"&nbsp;&nbsp;<b>{group_name}</b>：{'、'.join(visible_options)}")
 
-    return current_feature_options, hint_lines
+    for group_name, options in hint_options.items():
+        if options:
+            hint_lines.append(f"&nbsp;&nbsp;<b>{group_name}</b>：{'、'.join(options)}")
+
+    return choice_options, hint_lines
 
 
 # ─────────────────────────────────────────────
@@ -493,6 +536,7 @@ def render_intro():
     st.session_state.annotator_id = annotator_id.strip()
 
     st.markdown("### 情緒類別定義參考")
+
     for emo, defn in EMOTION_DEFINITIONS.items():
         icon = EMOTION_ICONS.get(emo, "")
         st.markdown(
@@ -588,6 +632,7 @@ def render_sidebar():
         st.caption(f"第 {idx + 1} / {len(IMAGES)} 張｜{image['image_id']}")
 
         path = image.get("path", "")
+
         if path and Path(path).exists():
             st.image(path, use_container_width=True)
         else:
@@ -608,6 +653,7 @@ def render_task():
     render_sidebar()
 
     image = current_image()
+
     if image is None:
         st.session_state.page = "overall_feedback"
         scroll_top()
@@ -641,22 +687,26 @@ def render_task():
     )
 
     uncertain_reason = ""
+
     if final_emotion == "其他／無法判斷":
         st.markdown(
             '<div class="warn-card">請說明「其他／無法判斷」的原因：</div>',
             unsafe_allow_html=True,
         )
-        uncertain_reason = st.radio(
-            "原因",
-            UNCERTAIN_REASONS,
-            index=None,
-            key=f"{prefix}_uncertain",
-        ) or ""
+        uncertain_reason = (
+            st.radio(
+                "原因",
+                UNCERTAIN_REASONS,
+                index=None,
+                key=f"{prefix}_uncertain",
+            )
+            or ""
+        )
 
     # ── Step 2：依所選情緒顯示觀察提示 ──
     st.markdown("## Step 2：閱讀所選情緒的部位特徵提示")
 
-    if final_emotion:
+    if final_emotion and final_emotion not in ["中性", "其他／無法判斷"]:
         current_feature_options, hint_lines = render_emotion_feature_hint(final_emotion)
 
         st.markdown(
@@ -681,51 +731,68 @@ def render_task():
             系統提供的特徵只是「可能出現」的觀察方向，並不代表照片中一定存在這些特徵。
             請不要因為看到提示就勾選該特徵。請只勾選照片中
             <b>實際可觀察到</b>，且您認為能支持情緒判斷的特徵。
-            若照片中沒有出現、看不清楚或無法判斷，請不要勾選該特徵，
-            可選擇「無法辨識」或於補充說明中說明。
+            若照片中沒有出現、看不清楚或無法判斷，請在下一步勾選「無法辨識」，
+            或於「其他」與補充說明中說明。
             </div>""",
             unsafe_allow_html=True,
         )
+
+    elif final_emotion in ["中性", "其他／無法判斷"]:
+        current_feature_options = {}
+        st.info(
+            "您選擇的是「中性」或「其他／無法判斷」，因此系統不提供特定情緒部位特徵提示。"
+            "請直接填寫後續信心、難度與提示幫助程度。"
+        )
+
     else:
-        current_feature_options = FEATURE_OPTIONS
+        current_feature_options = {}
         st.info("請先選擇主要情緒，系統才會顯示對應的部位特徵提示。")
 
     # ── Step 3：勾選部位特徵 ──
-    st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
-    st.caption("請勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。若無法辨識，請勾選「無法辨識」。")
-
     feature_selections = {}
     feature_other_texts = {}
-    col_left, col_right = st.columns(2)
-    feature_items = list(current_feature_options.items())
 
-    for i, (group_name, options) in enumerate(feature_items):
-        target_col = col_left if i % 2 == 0 else col_right
+    if current_feature_options:
+        st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
+        st.caption(
+            "請勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。"
+            "若該部位看不清楚，請選擇「無法辨識」；若有提示未列出的特徵，請選擇「其他」並補充說明。"
+        )
 
-        with target_col:
-            st.markdown(
-                f'<div class="feature-group"><div class="feature-group-title">{group_name}</div>',
-                unsafe_allow_html=True,
-            )
+        col_left, col_right = st.columns(2)
+        feature_items = list(current_feature_options.items())
 
-            selected = st.multiselect(
-                f"觀察到的{group_name}特徵",
-                options,
-                key=f"{prefix}_feat_{group_name}",
-                label_visibility="collapsed",
-            )
-            feature_selections[group_name] = selected
+        for i, (group_name, options) in enumerate(feature_items):
+            target_col = col_left if i % 2 == 0 else col_right
 
-            if "其他" in selected:
-                other_text = st.text_input(
-                    f"請補充{group_name}其他特徵",
-                    key=f"{prefix}_feat_other_{group_name}",
+            with target_col:
+                st.markdown(
+                    f'<div class="feature-group"><div class="feature-group-title">{group_name}</div>',
+                    unsafe_allow_html=True,
                 )
-                feature_other_texts[group_name] = other_text
-            else:
-                feature_other_texts[group_name] = ""
 
-            st.markdown("</div>", unsafe_allow_html=True)
+                selected = st.multiselect(
+                    f"觀察到的{group_name}特徵",
+                    options,
+                    key=f"{prefix}_feat_{group_name}",
+                    label_visibility="collapsed",
+                )
+                feature_selections[group_name] = selected
+
+                if "其他" in selected:
+                    other_text = st.text_input(
+                        f"請補充{group_name}其他特徵",
+                        key=f"{prefix}_feat_other_{group_name}",
+                    )
+                    feature_other_texts[group_name] = other_text
+                else:
+                    feature_other_texts[group_name] = ""
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    else:
+        st.markdown("## Step 3：部位特徵提示")
+        st.info("此情緒類別不提供特定部位特徵提示，因此本步驟不需勾選部位特徵。")
 
     # ── Step 4：一起填寫信心、難度與提示幫助程度 ──
     st.markdown("## Step 4：填寫標註信心、判斷難度與提示幫助程度")
@@ -808,8 +875,10 @@ def render_task():
 
     if idx > 0 and st.button("← 上一張"):
         st.session_state.image_index -= 1
+
         if st.session_state.pending_records:
             st.session_state.pending_records.pop()
+
         reset_timer()
         scroll_top()
         st.rerun()
@@ -865,8 +934,10 @@ def render_overall_feedback():
 
         for rec in st.session_state.pending_records:
             r = dict(rec)
+
             for field, _ in OVERALL_QUESTIONS:
                 r[field] = scores[field]
+
             final_records.append(r)
 
         st.session_state.final_records = final_records
@@ -903,6 +974,7 @@ def render_done():
             ]
             ok, msg = sync_to_cloud(rows)
             st.session_state["last_save_message"] = msg
+
         except Exception as e:
             st.session_state["last_save_message"] = f"CSV 已儲存，Google Sheet 同步失敗：{e}"
 
@@ -927,6 +999,7 @@ def render_done():
 
         if msg and "失敗" not in msg and "未設定" not in msg:
             st.success(f"☁️ {msg}")
+
         elif msg and ("失敗" in msg or "未設定" in msg):
             st.warning(f"⚠️ {msg}")
 
@@ -939,6 +1012,7 @@ def render_done():
                     _, msg2 = sync_to_cloud(rows)
                     st.session_state["last_save_message"] = msg2
                     st.rerun()
+
                 except Exception as e:
                     st.session_state["last_save_message"] = f"同步失敗：{e}"
                     st.rerun()
@@ -959,6 +1033,7 @@ def render_done():
         if st.button("↩ 回首頁重新開始", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
+
             scroll_top()
             st.rerun()
 
