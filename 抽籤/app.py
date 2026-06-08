@@ -15,10 +15,7 @@ GROUP_APP_URLS = {
     "B": "https://0610-b.streamlit.app/",
 }
 
-GROUP_LABELS = {
-    "A": "A 組",
-    "B": "B 組",
-}
+
 
 # 不再使用每小時限制。若後端 Apps Script 仍要求 limit 欄位，傳入極大值作為不限制。
 NO_LIMIT_VALUE = 999999
