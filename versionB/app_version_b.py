@@ -1,7 +1,7 @@
 """
 家貓情緒標註研究系統
 版本 B：有部位特徵提示
-流程：受試者基本資料 → 照片標註（結構化提示式）→ 整體反饋 → 完成
+流程：受試者基本資料 → 照片標註（情緒導向式特徵提示）→ 整體反饋 → 完成
 """
 
 import time
@@ -57,7 +57,7 @@ EMOTION_ICONS = {
 
 EMOTION_DEFINITIONS = {
     "害怕": "由立即感知到的危險或危險的威脅引起的，表現為警惕和試圖撤退或逃跑。",
-    "憤怒": "由執行行動/實現目標的願望受挫或資源競爭引起，表現為攻擊性或攻擊威脅。",
+    "憤怒": "由執行行動／實現目標的願望受挫或資源競爭引起，表現為攻擊性或攻擊威脅。",
     "歡樂/玩耍": "表現為非功能性行為，包括運動遊戲、社交遊戲或物件遊戲。",
     "滿意": "由需求和願望得到滿足而產生的正向情緒狀態，表現為休息、平靜和親和。",
     "好奇": "由新奇或顯著刺激引起，表現為注意、定向或探索行為。",
@@ -68,7 +68,7 @@ EMOTION_DEFINITIONS = {
 UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類", "其他"]
 
 # ─────────────────────────────────────────────
-# 版本 B：部位特徵選項（多選）
+# 版本 B：全部部位特徵選項（備用）
 # ─────────────────────────────────────────────
 FEATURE_OPTIONS = {
     "眼睛": [
@@ -111,6 +111,50 @@ FEATURE_OPTIONS = {
         "無法辨識",
         "其他",
     ],
+}
+
+# ─────────────────────────────────────────────
+# 情緒導向式部位特徵提示
+# 受試者先選情緒，再顯示該情緒可能出現的特徵
+# ─────────────────────────────────────────────
+EMOTION_FEATURE_HINTS = {
+    "害怕": {
+        "眼睛": ["睜大", "瞳孔放大", "直視", "避免眼神接觸", "無法辨識", "其他"],
+        "耳朵": ["側向", "壓平", "無法辨識", "其他"],
+        "尾巴": ["夾起", "壓低僵硬", "快速甩動", "無法辨識", "其他"],
+        "身體／姿勢": ["緊繃", "壓低", "拱背", "炸毛", "發抖／僵硬", "無法辨識", "其他"],
+    },
+    "憤怒": {
+        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
+        "耳朵": ["側向", "壓平", "無法辨識", "其他"],
+        "尾巴": ["快速甩動", "壓低僵硬", "水平", "無法辨識", "其他"],
+        "身體／姿勢": ["緊繃", "前傾", "拱背", "炸毛", "姿勢變化頻繁", "無法辨識", "其他"],
+    },
+    "歡樂/玩耍": {
+        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
+        "耳朵": ["直立", "朝向刺激物", "無法辨識", "其他"],
+        "尾巴": ["豎起", "水平", "快速甩動", "無法辨識", "其他"],
+        "身體／姿勢": ["放鬆", "前傾", "姿勢變化頻繁", "無法辨識", "其他"],
+    },
+    "滿意": {
+        "眼睛": ["半睜／放鬆", "緊閉", "無法辨識", "其他"],
+        "耳朵": ["直立", "側向", "無法辨識", "其他"],
+        "尾巴": ["放鬆", "水平", "無法辨識", "其他"],
+        "身體／姿勢": ["放鬆", "無法辨識", "其他"],
+    },
+    "好奇": {
+        "眼睛": ["睜大", "瞳孔放大", "直視", "無法辨識", "其他"],
+        "耳朵": ["直立", "朝向刺激物", "無法辨識", "其他"],
+        "尾巴": ["豎起", "水平", "無法辨識", "其他"],
+        "身體／姿勢": ["前傾", "姿勢變化頻繁", "無法辨識", "其他"],
+    },
+    "中性": {
+        "眼睛": ["半睜／放鬆", "直視", "無法辨識", "其他"],
+        "耳朵": ["直立", "側向", "無法辨識", "其他"],
+        "尾巴": ["放鬆", "水平", "無法辨識", "其他"],
+        "身體／姿勢": ["放鬆", "無法辨識", "其他"],
+    },
+    "其他／無法判斷": FEATURE_OPTIONS,
 }
 
 # ─────────────────────────────────────────────
@@ -162,23 +206,38 @@ HELPFULNESS_SCORE_MAP = {
 }
 
 OVERALL_QUESTIONS = [
-    ("overall_easy",                "Q1：在本次標註過程中，我覺得判斷家貓情緒是容易的。"),
-    ("overall_intuition",           "Q2：在本次標註過程中，我是依靠直覺判斷家貓情緒。"),
-    ("overall_explainable",         "Q3：在本次標註過程中，我能明確說明自己為什麼選擇該情緒。"),
+    ("overall_easy", "Q1：在本次標註過程中，我覺得判斷家貓情緒是容易的。"),
+    ("overall_intuition", "Q2：在本次標註過程中，我是依靠直覺判斷家貓情緒。"),
+    ("overall_explainable", "Q3：在本次標註過程中，我能明確說明自己為什麼選擇該情緒。"),
     ("overall_observation_clarity", "Q4：在本次標註過程中，我能清楚知道應該優先觀察哪些部位來判斷情緒。"),
 ]
 
 DATA_COLUMNS = [
-    "annotator_id", "questionnaire_version",
-    "has_cat_experience", "current_cat_owner",
-    "cat_understanding_score", "animal_related_background",
-    "cat_emotion_basic_knowledge", "prior_knowledge_group",
-    "image_id", "difficulty", "condition",
-    "final_emotion", "confidence", "difficulty_score",
-    "uncertain_reason", "additional_note",
-    "eye_feature", "ear_feature", "posture_feature", "tail_feature",
+    "annotator_id",
+    "questionnaire_version",
+    "has_cat_experience",
+    "current_cat_owner",
+    "cat_understanding_score",
+    "animal_related_background",
+    "cat_emotion_basic_knowledge",
+    "prior_knowledge_group",
+    "image_id",
+    "difficulty",
+    "condition",
+    "final_emotion",
+    "confidence",
+    "difficulty_score",
+    "uncertain_reason",
+    "additional_note",
+    "eye_feature",
+    "ear_feature",
+    "posture_feature",
+    "tail_feature",
     "prompt_helpfulness",
-    "overall_easy", "overall_intuition", "overall_explainable", "overall_observation_clarity",
+    "overall_easy",
+    "overall_intuition",
+    "overall_explainable",
+    "overall_observation_clarity",
 ]
 
 # ─────────────────────────────────────────────
@@ -220,6 +279,12 @@ h4 { font-size: 14px !important; color: #a04000 !important; margin-top: 12px !im
     border-left: 4px solid #27ae60; border-radius: 6px;
     background: #eafaf1; margin-bottom: 16px;
     font-size: 13.5px; line-height: 1.9; color: #145a32;
+}
+.bias-card {
+    padding: 14px 18px; border: 1px solid #f7dc6f;
+    border-left: 4px solid #f1c40f; border-radius: 6px;
+    background: #fff9e6; margin-bottom: 16px;
+    font-size: 13.5px; line-height: 1.8; color: #5a4000;
 }
 .warn-card {
     padding: 12px 16px; border-radius: 4px; background: #fffbf0;
@@ -302,12 +367,23 @@ def scroll_top():
 
 def do_scroll():
     if st.session_state.pop("scroll_to_top", False):
-        components.html("""<script>
-        function t(){try{window.parent.scrollTo(0,0);
-        ['section.main','main','.stApp'].forEach(function(s){
-        window.parent.document.querySelectorAll(s).forEach(function(el){el.scrollTop=0;});});}catch(e){}}
-        t();[100,300,600].forEach(function(d){setTimeout(t,d);});
-        </script>""", height=0)
+        components.html(
+            """<script>
+            function t(){
+                try{
+                    window.parent.scrollTo(0,0);
+                    ['section.main','main','.stApp'].forEach(function(s){
+                        window.parent.document.querySelectorAll(s).forEach(function(el){
+                            el.scrollTop=0;
+                        });
+                    });
+                }catch(e){}
+            }
+            t();
+            [100,300,600].forEach(function(d){setTimeout(t,d);});
+            </script>""",
+            height=0,
+        )
 
 
 def reset_timer():
@@ -329,7 +405,7 @@ def compute_group():
 def base_fields():
     return {
         "annotator_id": st.session_state.annotator_id,
-        "questionnaire_version": "版本 B：有部位特徵提示",
+        "questionnaire_version": "版本 B：情緒導向式部位特徵提示",
         "has_cat_experience": st.session_state.has_cat_experience or "",
         "current_cat_owner": st.session_state.current_cat_owner or "",
         "cat_understanding_score": st.session_state.cat_understanding_score or "",
@@ -342,6 +418,7 @@ def base_fields():
 def save_records(records):
     rows = [{col: r.get(col, "") for col in DATA_COLUMNS} for r in records]
     df_new = pd.DataFrame(rows, columns=DATA_COLUMNS)
+
     if OUTPUT_CSV.exists():
         df_old = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
         for col in DATA_COLUMNS:
@@ -350,21 +427,25 @@ def save_records(records):
         df_all = pd.concat([df_old[DATA_COLUMNS], df_new], ignore_index=True)
     else:
         df_all = df_new
+
     df_all.to_csv(OUTPUT_CSV, index=False, encoding="utf-8-sig")
 
 
 def sync_to_cloud(rows):
     if not SHEET_WEBHOOK_URL.strip():
         return False, "尚未設定 SHEET_WEBHOOK_URL。"
+
     resp = requests.post(
         SHEET_WEBHOOK_URL,
         json={"secret": SHEET_SECRET, "records": rows},
         timeout=20,
     )
     resp.raise_for_status()
+
     data = resp.json()
     if not data.get("ok"):
         raise ValueError(data.get("error", "Unknown error"))
+
     return True, f"已同步 {data.get('inserted', len(rows))} 筆至 Google Sheet。"
 
 
@@ -372,6 +453,7 @@ def build_feature_str(selections, group_name, other_texts):
     sel = selections.get(group_name, [])
     if not sel:
         return ""
+
     parts = []
     for s in sel:
         if s == "其他":
@@ -379,18 +461,31 @@ def build_feature_str(selections, group_name, other_texts):
             parts.append(f"其他：{extra}" if extra else "其他")
         else:
             parts.append(s)
+
     return "、".join(parts)
+
+
+def render_emotion_feature_hint(final_emotion):
+    current_feature_options = EMOTION_FEATURE_HINTS.get(final_emotion, FEATURE_OPTIONS)
+
+    hint_lines = []
+    for group_name, options in current_feature_options.items():
+        visible_options = [opt for opt in options if opt not in ["無法辨識", "其他"]]
+        if visible_options:
+            hint_lines.append(f"&nbsp;&nbsp;<b>{group_name}</b>：{'、'.join(visible_options)}")
+
+    return current_feature_options, hint_lines
 
 
 # ─────────────────────────────────────────────
 # 頁面 1：首頁
 # ─────────────────────────────────────────────
 def render_intro():
-    st.markdown('<div class="version-badge">版本 B：有部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">🐱 家貓情緒標註研究</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sub-title">版本 B：系統將提供眼睛、耳朵、尾巴、身體／姿勢觀察提示，'
-        '請依據特徵引導進行情緒標註，並勾選支持判斷的部位特徵。</div>',
+        '<div class="sub-title">版本 B：請先選擇主要情緒，系統會依據您所選情緒顯示可能出現的部位特徵。'
+        '請只勾選照片中實際觀察到、且能支持判斷的特徵。</div>',
         unsafe_allow_html=True,
     )
 
@@ -407,6 +502,7 @@ def render_intro():
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
+
     if st.button("開始標註 →", type="primary", disabled=not bool(st.session_state.annotator_id)):
         st.session_state.page = "background"
         scroll_top()
@@ -417,7 +513,7 @@ def render_intro():
 # 頁面 2：先備知識問卷
 # ─────────────────────────────────────────────
 def render_background():
-    st.markdown('<div class="version-badge">版本 B：有部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">受試者基本資料</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">請回答以下問題，作為後續分析的分組依據。</div>', unsafe_allow_html=True)
 
@@ -426,17 +522,24 @@ def render_background():
 
     bg = st.radio(
         "3. 您是否具有動物照護、獸醫、動物行為或相關背景？",
-        ["是", "否"], index=None, key="bg_background",
+        ["是", "否"],
+        index=None,
+        key="bg_background",
     )
 
     emotion_knowledge = st.radio(
         "4. 您是否對貓咪常見情緒表現有基本認知，例如害怕、生氣、滿意或好奇時可能出現的特徵？",
-        ["是", "否"], index=None, key="bg_emotion_knowledge",
+        ["是", "否"],
+        index=None,
+        key="bg_emotion_knowledge",
     )
 
     understand_choice = st.radio(
         "5. 您對貓咪行為的了解程度",
-        CAT_UNDERSTANDING_OPTIONS, index=None, horizontal=True, key="bg_understand",
+        CAT_UNDERSTANDING_OPTIONS,
+        index=None,
+        horizontal=True,
+        key="bg_understand",
     )
     understand = CAT_UNDERSTANDING_SCORE_MAP.get(understand_choice) if understand_choice else None
 
@@ -457,6 +560,7 @@ def render_background():
         st.rerun()
 
     st.divider()
+
     if st.button("← 上一頁"):
         st.session_state.page = "intro"
         scroll_top()
@@ -469,11 +573,13 @@ def render_background():
 def render_sidebar():
     with st.sidebar:
         image = current_image()
+
         st.markdown(
-            '<div class="version-badge" style="margin-bottom:10px;">版本 B：有部位特徵提示</div>',
+            '<div class="version-badge" style="margin-bottom:10px;">版本 B：情緒導向式特徵提示</div>',
             unsafe_allow_html=True,
         )
         st.markdown("### 家貓照片")
+
         if image is None:
             st.info("所有照片已完成標註。")
             return
@@ -492,6 +598,7 @@ def render_sidebar():
 
         st.markdown("---")
         st.markdown("**📖 情緒定義**")
+
         for emo, defn in EMOTION_DEFINITIONS.items():
             with st.expander(f"{EMOTION_ICONS.get(emo, '')} {emo}", expanded=False):
                 st.caption(defn)
@@ -499,6 +606,7 @@ def render_sidebar():
 
 def render_task():
     render_sidebar()
+
     image = current_image()
     if image is None:
         st.session_state.page = "overall_feedback"
@@ -509,11 +617,12 @@ def render_task():
     idx = st.session_state.image_index
     prefix = f"b_i{idx}"
 
-    st.markdown('<div class="version-badge">版本 B：有部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">🐱 家貓情緒標註</div>', unsafe_allow_html=True)
     st.markdown(
-        f'<div class="info-card" style="border-left-color:#e67e22;">請先閱讀部位特徵提示，'
-        f'再觀看照片進行標註，最後勾選支持判斷的部位特徵。<br>'
+        f'<div class="info-card" style="border-left-color:#e67e22;">'
+        f'請先觀看左側照片並選擇主要情緒。系統接著會依據您所選的情緒，'
+        f'顯示該情緒可能出現的部位特徵。請只勾選照片中實際可觀察到的特徵。<br>'
         f'<b>第 {idx + 1} / {len(IMAGES)} 張</b></div>',
         unsafe_allow_html=True,
     )
@@ -521,22 +630,10 @@ def render_task():
     if st.session_state.task_start_time is None:
         reset_timer()
 
-    st.markdown("## Step 1：閱讀部位特徵觀察提示")
-    st.markdown(
-        """<div class="feature-hint-card">
-        <b>📋 觀察提示（僅作為觀察方向，不直接提供情緒答案）</b><br>
-        請從以下幾個面向觀察左側照片中的家貓：<br>
-        &nbsp;&nbsp;👁️ <b>眼睛</b>：睜大、半睜／放鬆、緊閉、瞳孔放大、直視、避免眼神接觸<br>
-        &nbsp;&nbsp;👂 <b>耳朵</b>：直立、朝向刺激物、側向、壓平<br>
-        &nbsp;&nbsp;🐾 <b>尾巴</b>：豎起、水平、放鬆、夾起、壓低僵硬、快速甩動<br>
-        &nbsp;&nbsp;🐈 <b>身體／姿勢</b>：放鬆、緊繃、壓低、前傾、拱背、炸毛、發抖／僵硬、姿勢變化頻繁
-        </div>""",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("## Step 2：選擇主要情緒")
+    # ── Step 1：先選擇情緒 ──
+    st.markdown("## Step 1：選擇主要情緒")
     final_emotion = st.radio(
-        "請選擇最符合的情緒",
+        "請先根據照片，選擇您認為最符合的主要情緒",
         EMOTION_OPTIONS,
         index=None,
         key=f"{prefix}_emotion",
@@ -556,41 +653,61 @@ def render_task():
             key=f"{prefix}_uncertain",
         ) or ""
 
-    st.markdown("## Step 3：填寫標註信心")
-    confidence_choice = st.radio(
-        "信心程度",
-        CONFIDENCE_OPTIONS,
-        index=None,
-        horizontal=True,
-        key=f"{prefix}_conf",
-    )
-    confidence = CONFIDENCE_SCORE_MAP.get(confidence_choice) if confidence_choice else None
+    # ── Step 2：依所選情緒顯示觀察提示 ──
+    st.markdown("## Step 2：閱讀所選情緒的部位特徵提示")
 
-    st.markdown("## Step 4：填寫判斷難度")
-    difficulty_choice = st.radio(
-        "判斷難度",
-        DIFFICULTY_OPTIONS,
-        index=None,
-        horizontal=True,
-        key=f"{prefix}_diff",
-    )
-    difficulty_score = DIFFICULTY_SCORE_MAP.get(difficulty_choice) if difficulty_choice else None
+    if final_emotion:
+        current_feature_options, hint_lines = render_emotion_feature_hint(final_emotion)
 
-    st.markdown("## Step 5：勾選支持情緒判斷的部位特徵")
-    st.caption("請勾選您在照片中觀察到、且用以支持情緒判斷的特徵（可複選，若無法辨識請勾選「無法辨識」）。")
+        st.markdown(
+            f"""<div class="feature-hint-card">
+            <b>📋 您目前選擇的情緒：{EMOTION_ICONS.get(final_emotion, '')} {final_emotion}</b><br>
+            以下內容為此情緒「可能出現」的部位特徵，僅作為觀察方向，並非標準答案。
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+        if hint_lines:
+            st.markdown(
+                f"""<div class="feature-hint-card">
+                {'<br>'.join(hint_lines)}
+                </div>""",
+                unsafe_allow_html=True,
+            )
+
+        st.markdown(
+            """<div class="bias-card">
+            <b>⚠️ 避免確認偏誤提醒：</b><br>
+            系統提供的特徵只是「可能出現」的觀察方向，並不代表照片中一定存在這些特徵。
+            請不要因為看到提示就勾選該特徵。請只勾選照片中
+            <b>實際可觀察到</b>，且您認為能支持情緒判斷的特徵。
+            若照片中沒有出現、看不清楚或無法判斷，請不要勾選該特徵，
+            可選擇「無法辨識」或於補充說明中說明。
+            </div>""",
+            unsafe_allow_html=True,
+        )
+    else:
+        current_feature_options = FEATURE_OPTIONS
+        st.info("請先選擇主要情緒，系統才會顯示對應的部位特徵提示。")
+
+    # ── Step 3：勾選部位特徵 ──
+    st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
+    st.caption("請勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。若無法辨識，請勾選「無法辨識」。")
 
     feature_selections = {}
     feature_other_texts = {}
     col_left, col_right = st.columns(2)
-    feature_items = list(FEATURE_OPTIONS.items())
+    feature_items = list(current_feature_options.items())
 
     for i, (group_name, options) in enumerate(feature_items):
         target_col = col_left if i % 2 == 0 else col_right
+
         with target_col:
             st.markdown(
                 f'<div class="feature-group"><div class="feature-group-title">{group_name}</div>',
                 unsafe_allow_html=True,
             )
+
             selected = st.multiselect(
                 f"觀察到的{group_name}特徵",
                 options,
@@ -610,9 +727,29 @@ def render_task():
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("## Step 6：部位特徵提示之幫助程度")
+    # ── Step 4：一起填寫信心、難度與提示幫助程度 ──
+    st.markdown("## Step 4：填寫標註信心、判斷難度與提示幫助程度")
+
+    confidence_choice = st.radio(
+        "1. 您對此張照片情緒標註的信心程度",
+        CONFIDENCE_OPTIONS,
+        index=None,
+        horizontal=True,
+        key=f"{prefix}_conf",
+    )
+    confidence = CONFIDENCE_SCORE_MAP.get(confidence_choice) if confidence_choice else None
+
+    difficulty_choice = st.radio(
+        "2. 您覺得此張照片的情緒判斷難度",
+        DIFFICULTY_OPTIONS,
+        index=None,
+        horizontal=True,
+        key=f"{prefix}_diff",
+    )
+    difficulty_score = DIFFICULTY_SCORE_MAP.get(difficulty_choice) if difficulty_choice else None
+
     prompt_helpfulness_choice = st.radio(
-        "部位特徵提示對您判斷情緒的幫助程度",
+        "3. 所選情緒對應的部位特徵提示，對您判斷情緒的幫助程度",
         HELPFULNESS_OPTIONS,
         index=None,
         horizontal=True,
@@ -624,7 +761,7 @@ def render_task():
         "補充說明（選填）",
         key=f"{prefix}_note",
         height=75,
-        placeholder="例如：耳朵後壓讓我判斷為害怕、尾巴特徵不清楚…",
+        placeholder="例如：我選擇害怕，但照片中耳朵不清楚，因此主要依據身體壓低判斷…",
     )
 
     required_ok = (
@@ -640,7 +777,7 @@ def render_task():
             **base_fields(),
             "image_id": image["image_id"],
             "difficulty": image["difficulty"],
-            "condition": "有部位特徵提示",
+            "condition": "情緒導向式部位特徵提示",
             "final_emotion": final_emotion,
             "confidence": confidence,
             "difficulty_score": difficulty_score,
@@ -668,6 +805,7 @@ def render_task():
         st.rerun()
 
     st.divider()
+
     if idx > 0 and st.button("← 上一張"):
         st.session_state.image_index -= 1
         if st.session_state.pending_records:
@@ -681,7 +819,7 @@ def render_task():
 # 頁面 4：整體反饋問卷
 # ─────────────────────────────────────────────
 def render_overall_feedback():
-    st.markdown('<div class="version-badge">版本 B：有部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">📋 整體標註體驗反饋</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">以下題目請針對剛才所有照片的標註過程整體評估（非單張照片）。</div>',
@@ -689,6 +827,7 @@ def render_overall_feedback():
     )
 
     scores = {}
+
     for field, question in OVERALL_QUESTIONS:
         clean_q = question.rstrip("。")
         st.markdown(
@@ -698,6 +837,7 @@ def render_overall_feedback():
             f'color:#4a2000;margin-bottom:10px;">{clean_q}</div></div>',
             unsafe_allow_html=True,
         )
+
         choice = st.radio(
             clean_q,
             LIKERT_OPTIONS,
@@ -722,6 +862,7 @@ def render_overall_feedback():
 
     if st.button("完成標註，儲存資料 →", type="primary", disabled=not complete, use_container_width=True):
         final_records = []
+
         for rec in st.session_state.pending_records:
             r = dict(rec)
             for field, _ in OVERALL_QUESTIONS:
@@ -735,11 +876,14 @@ def render_overall_feedback():
         st.rerun()
 
     st.divider()
+
     if st.button("← 返回最後一張照片"):
         st.session_state.page = "task"
         st.session_state.image_index = len(IMAGES) - 1
+
         if st.session_state.pending_records:
             st.session_state.pending_records.pop()
+
         reset_timer()
         scroll_top()
         st.rerun()
@@ -751,6 +895,7 @@ def render_overall_feedback():
 def render_done():
     if not st.session_state.get("cloud_sync_attempted"):
         st.session_state["cloud_sync_attempted"] = True
+
         try:
             rows = [
                 {col: r.get(col, "") for col in DATA_COLUMNS}
@@ -775,12 +920,16 @@ def render_done():
             unsafe_allow_html=True,
         )
 
-        st.markdown('<div class="version-badge">版本 B：有部位特徵提示</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>',
+            unsafe_allow_html=True,
+        )
 
         if msg and "失敗" not in msg and "未設定" not in msg:
             st.success(f"☁️ {msg}")
         elif msg and ("失敗" in msg or "未設定" in msg):
             st.warning(f"⚠️ {msg}")
+
             if st.button("重新上傳至 Google Sheet", type="primary", use_container_width=True):
                 try:
                     rows = [
