@@ -5,7 +5,7 @@ import streamlit as st
 # =========================
 # 基本設定
 # =========================
-APP_TITLE = "家貓情緒研究｜實驗分組抽籤"
+APP_TITLE = "實驗分組抽籤"
 
 ASSIGNMENT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxvacTvKldHZhZwYElBHi9F8KzTM3OFEhJy1r5ZaGVDa48a7jOHBfVL2cI3B1VtTYZA/exec"
 ASSIGNMENT_SECRET = "hci_group_assignment_secret"
