@@ -892,7 +892,7 @@ def render_task():
     if not skip_feature_selection:
         st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
         st.caption(
-            "請從完整特徵清單中，勾選您在照片中實際觀察到、且用以支持情緒判斷的特徵。"
+            "請選取您在照片中實際觀察到、且用以支持情緒判斷的特徵(可複選)。"
             "若該部位看不清楚，請選擇「無法辨識」；若有清單未列出的特徵，請選擇「其他」並補充說明。"
         )
 
@@ -965,7 +965,7 @@ def render_task():
         "補充說明（選填）",
         key=f"{prefix}_note",
         height=75,
-        placeholder="例如：我選擇害怕，但照片中耳朵不清楚，因此主要依據身體壓低判斷…",
+       
     )
 
     required_ok = (
