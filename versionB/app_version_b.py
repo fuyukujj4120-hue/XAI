@@ -308,9 +308,6 @@ DATA_COLUMNS = [
     "prior_knowledge_group",
     "image_id",
     "difficulty",
-    "annotation_started_at",
-    "annotation_submitted_at",
-    "annotation_time_seconds",
     "condition",
     "final_emotion",
     "confidence",
@@ -322,6 +319,9 @@ DATA_COLUMNS = [
     "posture_feature",
     "tail_feature",
     "prompt_helpfulness",
+    "annotation_started_at",
+    "annotation_submitted_at",
+    "annotation_time_seconds",
     "overall_easy",
     "overall_intuition",
     "overall_explainable",
@@ -466,7 +466,6 @@ def init_state():
         "prior_knowledge_group": "",
         "image_index": 0,
         "task_start_time": None,
-        "task_start_datetime": "",
         "pending_records": [],
         "final_records": [],
         "cloud_sync_attempted": False,
@@ -503,20 +502,14 @@ def do_scroll():
         )
 
 
-def current_timestamp():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 def reset_timer():
     st.session_state.task_start_time = time.time()
-    st.session_state.task_start_datetime = current_timestamp()
 
 
-def get_elapsed_seconds():
-    start_time = st.session_state.get("task_start_time")
-    if start_time is None:
+def format_timestamp(ts):
+    if not ts:
         return ""
-    return round(time.time() - start_time, 2)
+    return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def current_image():
@@ -920,16 +913,18 @@ def render_task():
     )
 
     if st.button("送出此張標註 →", type="primary", disabled=not required_ok):
-        annotation_submitted_at = current_timestamp()
-        annotation_time_seconds = get_elapsed_seconds()
+        annotation_started_ts = st.session_state.task_start_time
+        annotation_submitted_ts = time.time()
+        annotation_time_seconds = (
+            round(annotation_submitted_ts - annotation_started_ts, 2)
+            if annotation_started_ts
+            else ""
+        )
 
         record = {
             **base_fields(),
             "image_id": image["image_id"],
             "difficulty": image["difficulty"],
-            "annotation_started_at": st.session_state.get("task_start_datetime", ""),
-            "annotation_submitted_at": annotation_submitted_at,
-            "annotation_time_seconds": annotation_time_seconds,
             "condition": "情緒導向式部位特徵提示",
             "final_emotion": final_emotion,
             "confidence": confidence,
@@ -941,6 +936,9 @@ def render_task():
             "posture_feature": build_feature_str(feature_selections, "身體／姿勢", feature_other_texts),
             "tail_feature": build_feature_str(feature_selections, "尾巴", feature_other_texts),
             "prompt_helpfulness": prompt_helpfulness,
+            "annotation_started_at": format_timestamp(annotation_started_ts),
+            "annotation_submitted_at": format_timestamp(annotation_submitted_ts),
+            "annotation_time_seconds": annotation_time_seconds,
             "overall_easy": "",
             "overall_intuition": "",
             "overall_explainable": "",
