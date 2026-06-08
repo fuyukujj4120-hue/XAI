@@ -20,6 +20,7 @@ APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B"
 OUTPUT_CSV = Path("annotation_version_b.csv")
 BASE_DIR = Path(__file__).resolve().parent
 ANNOTATION_DIR = BASE_DIR / "annotations"
+IMAGE_DIR = BASE_DIR / "imgaes"  # 情緒定義圖片資料夾（依目前資料夾名稱）
 
 SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxNvaZl8movCnWa3iaJt-yOg9kJAWkAMK_ESWGa9H9Ttkc97gWIeQxb8mDjCkWSg0Lnw/exec"
 SHEET_SECRET = "hci_cat_annotation_secret"
@@ -28,9 +29,9 @@ SHEET_SECRET = "hci_cat_annotation_secret"
 # 照片清單
 # ─────────────────────────────────────────────
 IMAGES = [
-    {"image_id": "cat_easy", "difficulty": "易", "path": str(ANNOTATION_DIR / "cat_easy.jpg")},
-    {"image_id": "cat_medium", "difficulty": "中", "path": str(ANNOTATION_DIR / "cat_medium.jpg")},
-    {"image_id": "cat_hard", "difficulty": "難", "path": str(ANNOTATION_DIR / "cat_hard.jpg")},
+    {"image_id": "cat_easy", "difficulty": "易", "path": str(ANNOTATION_DIR / "cat_easy.png")},
+    {"image_id": "cat_medium", "difficulty": "中", "path": str(ANNOTATION_DIR / "cat_medium.png")},
+    {"image_id": "cat_hard", "difficulty": "難", "path": str(ANNOTATION_DIR / "cat_hard.png")},
 ]
 
 # ─────────────────────────────────────────────
@@ -64,6 +65,16 @@ EMOTION_DEFINITIONS = {
     "好奇": "由新奇或顯著刺激引起，表現為注意、定向或探索行為。",
     "中性": "無任何明顯情緒特徵，整體狀態平穩，未呈現明確的害怕、憤怒、歡樂／玩耍、滿意或好奇線索。",
     "其他／無法判斷": "影像品質不足、線索不足、多種情緒並存或超出現有分類。",
+}
+
+EMOTION_IMAGES = {
+    "害怕": IMAGE_DIR / "fear.png",
+    "憤怒": IMAGE_DIR / "anger.png",
+    "歡樂/玩耍": IMAGE_DIR / "joy.png",
+    "滿意": IMAGE_DIR / "contentment.png",
+    "好奇": IMAGE_DIR / "interest.png",
+    "中性": None,
+    "其他／無法判斷": None,
 }
 
 UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類"]
@@ -622,11 +633,22 @@ def render_intro():
 
     for emo, defn in EMOTION_DEFINITIONS.items():
         icon = EMOTION_ICONS.get(emo, "")
-        st.markdown(
-            f'<div class="emo-row"><span class="icon">{icon}</span>'
-            f'<span class="name">{emo}</span><span class="def">{defn}</span></div>',
-            unsafe_allow_html=True,
-        )
+        emo_img = EMOTION_IMAGES.get(emo)
+
+        with st.expander(f"{icon} {emo}", expanded=False):
+            if emo_img and Path(emo_img).exists():
+                st.image(str(emo_img), use_container_width=True)
+
+            st.markdown(
+                f"""
+                <div class="emo-row">
+                    <span class="icon">{icon}</span>
+                    <span class="name">{emo}</span>
+                    <span class="def">{defn}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -712,7 +734,7 @@ def render_sidebar():
             return
 
         idx = st.session_state.image_index
-        st.caption(f"第 {idx + 1} / {len(IMAGES)} 張｜{image['image_id']}")
+        st.caption(f"第 {idx + 1} / {len(IMAGES)} 張")
 
         path = image.get("path", "")
 
@@ -728,7 +750,12 @@ def render_sidebar():
         st.markdown("**📖 情緒定義**")
 
         for emo, defn in EMOTION_DEFINITIONS.items():
+            emo_img = EMOTION_IMAGES.get(emo)
+
             with st.expander(f"{EMOTION_ICONS.get(emo, '')} {emo}", expanded=False):
+                if emo_img and Path(emo_img).exists():
+                    st.image(str(emo_img), use_container_width=True)
+
                 st.caption(defn)
 
 
@@ -752,7 +779,7 @@ def render_task():
         f"""
         <div class="info-card" style="border-left-color:#e67e22;">
             請先觀看左側照片並選擇主要情緒。<br>
-            系統會依據您所選的情緒，顯示該情緒可能出現的部位特徵提示。<br>
+            系統接著會依據您所選的情緒，顯示該情緒可能出現的部位特徵提示。<br>
             接著請從完整特徵清單中勾選實際可觀察到的特徵。<br><br>
             <b>第 {idx + 1} / {len(IMAGES)} 張</b>
         </div>
