@@ -453,7 +453,7 @@ st.markdown(
     <div class="hero-card sketch-card">
         <div class="paw-deco">◇ ◆ ◇</div>
         <div class="cat-ears">🐱</div>
-        <div class="slot-title">家貓情緒研究<br>實驗分組抽籤</div>
+        <div class="slot-title"><br>實驗分組抽籤</div>
         <div class="slot-subtitle">
             請輸入受試者代號後按下抽籤。<br>
             系統會自動將您分配至 A 組或 B 組。<br>
