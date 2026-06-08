@@ -60,7 +60,6 @@ EMOTION_ICONS = {
     "滿意": "😽",
     "好奇": "🐾",
     "中性": "➖",
-    "其他／無法判斷": "❓",
 }
 
 EMOTION_DEFINITIONS = {
@@ -70,7 +69,6 @@ EMOTION_DEFINITIONS = {
     "滿意": "由需求和願望得到滿足而產生的正向情緒狀態，表現為休息、平靜和親和。",
     "好奇": "由新奇或顯著刺激引起，表現為注意、定向或探索行為。",
     "中性": "無任何明顯情緒特徵，整體狀態平穩，未呈現明確的害怕、憤怒、歡樂／玩耍、滿意或好奇線索。",
-    "其他／無法判斷": "影像品質不足、線索不足、多種情緒並存或超出現有分類。",
 }
 
 EMOTION_IMAGES = {
@@ -80,7 +78,6 @@ EMOTION_IMAGES = {
     "滿意": IMAGE_DIR / "contentment.png",
     "好奇": IMAGE_DIR / "interest.png",
     "中性": None,
-    "其他／無法判斷": None,
 }
 
 UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類"]
@@ -587,7 +584,6 @@ def render_task():
         "補充說明（選填）",
         key=f"{prefix}_note",
         height=75,
-        placeholder="例如：主要依據整體姿勢或直覺判斷…",
     )
 
     required_ok = (
