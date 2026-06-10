@@ -1,7 +1,7 @@
 """
 家貓情緒標註研究系統
 版本 B：情緒導向式部位特徵提示
-流程：受試者基本資料 → 照片標註（先選情緒，再顯示對應特徵提示）→ 整體反饋 → 完成
+流程：受試者基本資料 → 照片標註（先選初步情緒，再顯示對應特徵提示）→ 確認最終情緒 → 整體反饋 → 完成
 """
 
 import time
@@ -20,8 +20,8 @@ APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B"
 OUTPUT_CSV = Path("annotation_version_b.csv")
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
-ANNOTATION_DIR = PROJECT_ROOT  / "annotations"
-IMAGE_DIR = PROJECT_ROOT  / "imgaes"  # 情緒定義圖片資料夾（依目前資料夾名稱）
+ANNOTATION_DIR = PROJECT_ROOT / "annotations"
+IMAGE_DIR = PROJECT_ROOT / "imgaes"  # 情緒定義圖片資料夾（依目前資料夾名稱）
 
 SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxNvaZl8movCnWa3iaJt-yOg9kJAWkAMK_ESWGa9H9Ttkc97gWIeQxb8mDjCkWSg0Lnw/exec"
 SHEET_SECRET = "hci_cat_annotation_secret"
@@ -55,6 +55,7 @@ EMOTION_ICONS = {
     "滿意": "😽",
     "好奇": "🐾",
     "中性": "➖",
+    "其他／無法判斷": "❓",
 }
 
 EMOTION_DEFINITIONS = {
@@ -104,7 +105,6 @@ EMOTION_FEATURE_HINTS = {
             "發抖／僵硬",
         ],
     },
-
     "憤怒": {
         "眼睛": [
             "睜大",
@@ -123,10 +123,8 @@ EMOTION_FEATURE_HINTS = {
             "前傾",
             "拱背",
             "緊繃",
-         
         ],
     },
-
     "歡樂/玩耍": {
         "眼睛": [
             "瞳孔放大",
@@ -146,7 +144,6 @@ EMOTION_FEATURE_HINTS = {
             "手抓物體同時用腳踢",
         ],
     },
-
     "滿意": {
         "眼睛": [
             "半睜",
@@ -168,7 +165,6 @@ EMOTION_FEATURE_HINTS = {
             "踩踏",
         ],
     },
-
     "好奇": {
         "眼睛": [
             "瞳孔放大",
@@ -347,73 +343,165 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
 st.markdown(
     """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
-.stApp { background: #fdf6ed; }
+
+html, body, [class*="css"] {
+    font-family: 'Noto Sans TC', sans-serif;
+}
+
+.stApp {
+    background: #fdf6ed;
+}
+
 .main-title {
-    font-family: 'Noto Serif TC', serif; font-size: 24px; font-weight: 700;
-    color: #4a2000; letter-spacing: 0.04em; margin-bottom: 4px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #4a2000;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
 }
-.sub-title { color: #a0622a; font-size: 14px; margin-bottom: 20px; }
+
+.sub-title {
+    color: #a0622a;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
 h2 {
-    font-family: 'Noto Serif TC', serif !important; font-size: 17px !important;
-    font-weight: 700 !important; color: #6b3a00 !important;
-    border-bottom: 2px solid #f0b27a; padding-bottom: 6px;
-    margin-top: 22px !important; margin-bottom: 10px !important;
+    font-family: 'Noto Serif TC', serif !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: #6b3a00 !important;
+    border-bottom: 2px solid #f0b27a;
+    padding-bottom: 6px;
+    margin-top: 22px !important;
+    margin-bottom: 10px !important;
 }
-h3 { font-size: 15px !important; color: #784212 !important; margin-top: 16px !important; }
-h4 { font-size: 14px !important; color: #a04000 !important; margin-top: 12px !important; }
+
+h3 {
+    font-size: 15px !important;
+    color: #784212 !important;
+    margin-top: 16px !important;
+}
+
+h4 {
+    font-size: 14px !important;
+    color: #a04000 !important;
+    margin-top: 12px !important;
+}
+
 .version-badge {
-    display: inline-block; background: #fdf2e9; color: #784212;
-    border: 1.5px solid #f0b27a; border-radius: 20px;
-    padding: 4px 16px; font-size: 13px; font-weight: 700;
-    letter-spacing: 0.06em; margin-bottom: 14px;
+    display: inline-block;
+    background: #fdf2e9;
+    color: #784212;
+    border: 1.5px solid #f0b27a;
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
 }
+
 .info-card {
-    padding: 14px 18px; border: 1px solid #f5cba7;
-    border-left: 4px solid #e67e22; border-radius: 4px;
-    background: #fdf2e9; margin-bottom: 14px;
-    font-size: 14px; line-height: 1.7; color: #4a2000;
+    padding: 14px 18px;
+    border: 1px solid #f5cba7;
+    border-left: 4px solid #e67e22;
+    border-radius: 4px;
+    background: #fdf2e9;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4a2000;
 }
+
 .feature-hint-card {
-    padding: 16px 20px; border: 1px solid #a9dfbf;
-    border-left: 4px solid #27ae60; border-radius: 6px;
-    background: #eafaf1; margin-bottom: 16px;
-    font-size: 13.5px; line-height: 1.9; color: #145a32;
+    padding: 16px 20px;
+    border: 1px solid #a9dfbf;
+    border-left: 4px solid #27ae60;
+    border-radius: 6px;
+    background: #eafaf1;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    line-height: 1.9;
+    color: #145a32;
 }
+
 .bias-card {
-    padding: 14px 18px; border: 1px solid #f7dc6f;
-    border-left: 4px solid #f1c40f; border-radius: 6px;
-    background: #fff9e6; margin-bottom: 16px;
-    font-size: 13.5px; line-height: 1.8; color: #5a4000;
+    padding: 14px 18px;
+    border: 1px solid #f7dc6f;
+    border-left: 4px solid #f1c40f;
+    border-radius: 6px;
+    background: #fff9e6;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: #5a4000;
 }
+
 .warn-card {
-    padding: 12px 16px; border-radius: 4px; background: #fffbf0;
-    border: 1px solid #f9e79f; border-left: 4px solid #f1c40f;
-    margin: 10px 0 14px 0; font-size: 13px; color: #5a4000;
+    padding: 12px 16px;
+    border-radius: 4px;
+    background: #fffbf0;
+    border: 1px solid #f9e79f;
+    border-left: 4px solid #f1c40f;
+    margin: 10px 0 14px 0;
+    font-size: 13px;
+    color: #5a4000;
 }
+
 .emo-row {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 14px; border-radius: 6px;
-    background: #fdf2e9; border: 1px solid #f5cba7;
-    margin-bottom: 7px; font-size: 13px; line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #fdf2e9;
+    border: 1px solid #f5cba7;
+    margin-bottom: 7px;
+    font-size: 13px;
+    line-height: 1.6;
 }
-.emo-row .icon { font-size: 20px; min-width: 28px; }
-.emo-row .name { font-weight: 700; color: #784212; min-width: 90px; }
-.emo-row .def  { color: #a04000; }
+
+.emo-row .icon {
+    font-size: 20px;
+    min-width: 28px;
+}
+
+.emo-row .name {
+    font-weight: 700;
+    color: #784212;
+    min-width: 90px;
+}
+
+.emo-row .def {
+    color: #a04000;
+}
+
 .placeholder {
-    height: 380px; border: 1.5px dashed #f0b27a; border-radius: 8px;
+    height: 380px;
+    border: 1.5px dashed #f0b27a;
+    border-radius: 8px;
     background: linear-gradient(160deg, #fdf2e9 0%, #fae5d3 100%);
-    display: flex; align-items: center; justify-content: center;
-    color: #c0874a; font-size: 15px; text-align: center; padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c0874a;
+    font-size: 15px;
+    text-align: center;
+    padding: 20px;
 }
+
 section[data-testid="stSidebar"] {
     background: #fdf6ed !important;
     border-right: 1px solid #f5cba7;
 }
+
 section[data-testid="stSidebar"] img {
     width: 100% !important;
     max-height: 60vh;
@@ -421,16 +509,20 @@ section[data-testid="stSidebar"] img {
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(231,76,60,0.12);
 }
+
 @media (max-width: 768px) {
     section[data-testid="stSidebar"] {
         background: #fdf6ed !important;
     }
+
     section[data-testid="stSidebar"] img {
         max-height: 48vh;
     }
+
     .main-title {
         font-size: 21px;
     }
+
     .sub-title,
     .info-card,
     .feature-hint-card,
@@ -438,25 +530,56 @@ section[data-testid="stSidebar"] img {
         font-size: 13px;
     }
 }
+
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #e67e22 0%, #c0392b 100%) !important;
-    color: #fff !important; border: none !important; border-radius: 4px !important;
-    font-size: 14px !important; font-weight: 700 !important; padding: 10px 24px !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    padding: 10px 24px !important;
 }
+
 .stButton > button:not([kind="primary"]) {
-    background: #fdf2e9 !important; color: #784212 !important;
-    border: 1.5px solid #f0b27a !important; border-radius: 4px !important;
+    background: #fdf2e9 !important;
+    color: #784212 !important;
+    border: 1.5px solid #f0b27a !important;
+    border-radius: 4px !important;
 }
+
 .feature-group {
-    background: #fffdf8; border: 1px solid #f5cba7;
-    border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+    background: #fffdf8;
+    border: 1px solid #f5cba7;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
 }
+
 .feature-group-title {
-    font-weight: 700; color: #6b3a00; font-size: 14px; margin-bottom: 8px;
+    font-weight: 700;
+    color: #6b3a00;
+    font-size: 14px;
+    margin-bottom: 8px;
 }
-.progress-tip { font-size: 12.5px; color: #a0622a; margin: 6px 0 14px 0; }
-.complete-tip { font-size: 12.5px; color: #1a8a4a; font-weight: 600; margin: 6px 0 14px 0; }
-hr { border-color: #f5cba7 !important; margin: 16px 0 !important; }
+
+.progress-tip {
+    font-size: 12.5px;
+    color: #a0622a;
+    margin: 6px 0 14px 0;
+}
+
+.complete-tip {
+    font-size: 12.5px;
+    color: #1a8a4a;
+    font-weight: 600;
+    margin: 6px 0 14px 0;
+}
+
+hr {
+    border-color: #f5cba7 !important;
+    margin: 16px 0 !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -604,9 +727,8 @@ def build_feature_str(selections, group_name, other_texts):
     return "、".join(parts)
 
 
-def render_emotion_feature_hint(final_emotion):
-    hint_options = EMOTION_FEATURE_HINTS.get(final_emotion, {})
-
+def render_emotion_feature_hint(initial_emotion):
+    hint_options = EMOTION_FEATURE_HINTS.get(initial_emotion, {})
     hint_lines = []
 
     for group_name, options in hint_options.items():
@@ -622,7 +744,6 @@ def render_emotion_feature_hint(final_emotion):
 def render_intro():
     st.markdown('<div class="version-badge">版本 B</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">🐱 家貓情緒標註研究</div>', unsafe_allow_html=True)
-    
 
     annotator_id = st.text_input("受試者學號／代號", value=st.session_state.annotator_id)
     st.session_state.annotator_id = annotator_id.strip()
@@ -776,9 +897,10 @@ def render_task():
     st.markdown(
         f"""
         <div class="info-card" style="border-left-color:#e67e22;">
-            請先觀看左側照片並選擇主要情緒。<br>
-            系統接著會依據您所選的情緒，顯示該情緒可能出現的部位特徵提示。<br>
-            接著請從完整特徵清單中勾選實際可觀察到的特徵。<br><br>
+            請先觀看左側照片並選擇初步情緒。<br>
+            系統接著會依據您所選的初步情緒，顯示該情緒可能出現的部位特徵提示。<br>
+            接著請從完整特徵清單中勾選實際可觀察到的特徵。<br>
+            最後請再次確認此張照片的最終情緒。<br><br>
             <b>第 {idx + 1} / {len(IMAGES)} 張</b>
         </div>
         """,
@@ -788,45 +910,28 @@ def render_task():
     if st.session_state.task_start_time is None:
         reset_timer()
 
-    # ── Step 1：先選擇情緒 ──
-    st.markdown("## Step 1：選擇主要情緒")
-    final_emotion = st.radio(
-        "請先根據照片，選擇您認為最符合的主要情緒",
+    # ── Step 1：先選擇初步情緒 ──
+    st.markdown("## Step 1：選擇初步情緒")
+    initial_emotion = st.radio(
+        "請先根據照片，選擇您初步認為最符合的情緒",
         EMOTION_OPTIONS,
         index=None,
         key=f"{prefix}_emotion",
         format_func=lambda x: f"{EMOTION_ICONS.get(x, '')} {x}",
     )
 
-    uncertain_reason = ""
-
-    if final_emotion == "其他／無法判斷":
-        st.markdown(
-            '<div class="warn-card">請說明「其他／無法判斷」的原因：</div>',
-            unsafe_allow_html=True,
-        )
-        uncertain_reason = (
-            st.radio(
-                "原因",
-                UNCERTAIN_REASONS,
-                index=None,
-                key=f"{prefix}_uncertain",
-            )
-            or ""
-        )
-
-    # ── Step 2：依所選情緒顯示觀察提示 ──
+    # ── Step 2：依所選初步情緒顯示觀察提示 ──
     st.markdown("## Step 2：閱讀所選情緒的部位特徵提示")
 
     skip_feature_selection = False
 
-    if final_emotion and final_emotion not in ["中性", "其他／無法判斷"]:
-        hint_lines = render_emotion_feature_hint(final_emotion)
+    if initial_emotion and initial_emotion not in ["中性", "其他／無法判斷"]:
+        hint_lines = render_emotion_feature_hint(initial_emotion)
 
         st.markdown(
             f"""
             <div class="feature-hint-card">
-                <b>📋 您目前選擇的情緒：{EMOTION_ICONS.get(final_emotion, '')} {final_emotion}</b><br>
+                <b>📋 您目前初步選擇的情緒：{EMOTION_ICONS.get(initial_emotion, '')} {initial_emotion}</b><br>
                 以下內容為此情緒「可能出現」的部位特徵，僅作為觀察方向，並非標準答案。
             </div>
             """,
@@ -856,23 +961,23 @@ def render_task():
             unsafe_allow_html=True,
         )
 
-    elif final_emotion == "中性":
+    elif initial_emotion == "中性":
         st.markdown(
             """
             <div class="feature-hint-card">
-                您選擇的是「中性」，因此系統不提供特定情緒部位特徵提示。<br>
+                您初步選擇的是「中性」，因此系統不提供特定情緒部位特徵提示。<br>
                 但下一步仍可依照片情況勾選可觀察到的部位特徵，或選擇「無法辨識／其他」。
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    elif final_emotion == "其他／無法判斷":
+    elif initial_emotion == "其他／無法判斷":
         skip_feature_selection = True
         st.markdown(
             """
             <div class="feature-hint-card">
-                您選擇的是「其他／無法判斷」，因此系統不提供特定情緒部位特徵提示。<br>
+                您初步選擇的是「其他／無法判斷」，因此系統不提供特定情緒部位特徵提示。<br>
                 且無須勾選任何部位特徵。
             </div>
             """,
@@ -880,7 +985,7 @@ def render_task():
         )
 
     else:
-        st.info("請先選擇主要情緒，系統才會顯示對應的部位特徵提示。")
+        st.info("請先選擇初步情緒，系統才會顯示對應的部位特徵提示。")
 
     # ── Step 3：不依情緒限制，全部特徵皆可選 ──
     feature_selections = {}
@@ -889,7 +994,7 @@ def render_task():
     if not skip_feature_selection:
         st.markdown("## Step 3：勾選支持情緒判斷的部位特徵")
         st.caption(
-            "請選取您在照片中實際觀察到、且用以支持情緒判斷的特徵(可複選)。"
+            "請選取您在照片中實際觀察到、且用以支持情緒判斷的特徵（可複選）。"
             "若該部位看不清楚，請選擇「無法辨識」；若有清單未列出的特徵，請選擇「其他」並補充說明。"
         )
 
@@ -928,7 +1033,7 @@ def render_task():
         st.markdown("## Step 3：部位特徵")
         st.info("此類別不需勾選部位特徵，請直接填寫下一步。")
 
-    # ── Step 4：一起填寫信心、難度與提示幫助程度 ──
+    # ── Step 4：填寫信心、難度與提示幫助程度 ──
     st.markdown("## Step 4：填寫標註信心、判斷難度與提示幫助程度")
 
     confidence_choice = st.radio(
@@ -962,11 +1067,44 @@ def render_task():
         "補充說明（選填）",
         key=f"{prefix}_note",
         height=75,
-       
     )
 
+    # ── Step 5：確認最終情緒 ──
+    st.markdown("## Step 5：確認最終情緒")
+
+    if initial_emotion:
+        default_index = EMOTION_OPTIONS.index(initial_emotion) if initial_emotion in EMOTION_OPTIONS else None
+    else:
+        default_index = None
+
+    final_emotion = st.radio(
+        "請根據前面的觀察與特徵勾選結果，確認此張照片的最終情緒",
+        EMOTION_OPTIONS,
+        index=default_index,
+        key=f"{prefix}_final_emotion",
+        format_func=lambda x: f"{EMOTION_ICONS.get(x, '')} {x}",
+    )
+
+    uncertain_reason = ""
+
+    if final_emotion == "其他／無法判斷":
+        st.markdown(
+            '<div class="warn-card">請說明最終選擇「其他／無法判斷」的原因：</div>',
+            unsafe_allow_html=True,
+        )
+        uncertain_reason = (
+            st.radio(
+                "原因",
+                UNCERTAIN_REASONS,
+                index=None,
+                key=f"{prefix}_final_uncertain",
+            )
+            or ""
+        )
+
     required_ok = (
-        bool(final_emotion)
+        bool(initial_emotion)
+        and bool(final_emotion)
         and confidence is not None
         and difficulty_score is not None
         and prompt_helpfulness is not None
