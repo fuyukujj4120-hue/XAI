@@ -1138,7 +1138,7 @@ def render_done():
         )
 
         st.markdown(
-            '<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>',
+            '<div class="version-badge">版本 B</div>',
             unsafe_allow_html=True,
         )
 
