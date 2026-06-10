@@ -18,8 +18,10 @@ import streamlit.components.v1 as components
 # ─────────────────────────────────────────────
 APP_PAGE_TITLE = "🐱 家貓情緒標註｜版本 B"
 OUTPUT_CSV = Path("annotation_version_b.csv")
+
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
+
 ANNOTATION_DIR = PROJECT_ROOT / "annotations"
 IMAGE_DIR = PROJECT_ROOT / "imgaes"  # 情緒定義圖片資料夾（依目前資料夾名稱）
 
@@ -30,9 +32,21 @@ SHEET_SECRET = "hci_cat_annotation_secret"
 # 照片清單
 # ─────────────────────────────────────────────
 IMAGES = [
-    {"image_id": "cat_easy", "difficulty": "易", "path": str(ANNOTATION_DIR / "cat_easy.png")},
-    {"image_id": "cat_medium", "difficulty": "中", "path": str(ANNOTATION_DIR / "cat_medium.png")},
-    {"image_id": "cat_hard", "difficulty": "難", "path": str(ANNOTATION_DIR / "cat_hard.png")},
+    {
+        "image_id": "cat_easy",
+        "difficulty": "易",
+        "path": str(ANNOTATION_DIR / "cat_easy.png"),
+    },
+    {
+        "image_id": "cat_medium",
+        "difficulty": "中",
+        "path": str(ANNOTATION_DIR / "cat_medium.png"),
+    },
+    {
+        "image_id": "cat_hard",
+        "difficulty": "難",
+        "path": str(ANNOTATION_DIR / "cat_hard.png"),
+    },
 ]
 
 # ─────────────────────────────────────────────
@@ -74,13 +88,19 @@ EMOTION_IMAGES = {
     "滿意": IMAGE_DIR / "contentment.png",
     "好奇": IMAGE_DIR / "interest.png",
     "中性": None,
+    "其他／無法判斷": None,
 }
 
-UNCERTAIN_REASONS = ["影像品質不足", "線索不足", "多種情緒並存", "超出現有分類"]
+UNCERTAIN_REASONS = [
+    "影像品質不足",
+    "線索不足",
+    "多種情緒並存",
+    "超出現有分類",
+]
 
 # ─────────────────────────────────────────────
 # Step 2 專用：情緒導向式部位特徵提示
-# 這裡只顯示文獻整理後的可能特徵，不放「無法辨識」和「其他」
+# 只顯示文獻整理後的可能特徵，不放「無法辨識」和「其他」
 # ─────────────────────────────────────────────
 EMOTION_FEATURE_HINTS = {
     "害怕": {
@@ -253,6 +273,7 @@ FEATURE_OPTIONS = {
 # 量表選項
 # ─────────────────────────────────────────────
 LIKERT_OPTIONS = ["非常不同意", "不同意", "普通", "同意", "非常同意"]
+
 LIKERT_SCORE_MAP = {
     "非常不同意": 1,
     "不同意": 2,
@@ -261,7 +282,14 @@ LIKERT_SCORE_MAP = {
     "非常同意": 5,
 }
 
-CAT_UNDERSTANDING_OPTIONS = ["非常不了解", "不了解", "普通", "了解", "非常了解"]
+CAT_UNDERSTANDING_OPTIONS = [
+    "非常不了解",
+    "不了解",
+    "普通",
+    "了解",
+    "非常了解",
+]
+
 CAT_UNDERSTANDING_SCORE_MAP = {
     "非常不了解": 1,
     "不了解": 2,
@@ -270,7 +298,14 @@ CAT_UNDERSTANDING_SCORE_MAP = {
     "非常了解": 5,
 }
 
-CONFIDENCE_OPTIONS = ["非常沒信心", "沒信心", "普通", "有信心", "非常有信心"]
+CONFIDENCE_OPTIONS = [
+    "非常沒信心",
+    "沒信心",
+    "普通",
+    "有信心",
+    "非常有信心",
+]
+
 CONFIDENCE_SCORE_MAP = {
     "非常沒信心": 1,
     "沒信心": 2,
@@ -279,7 +314,14 @@ CONFIDENCE_SCORE_MAP = {
     "非常有信心": 5,
 }
 
-DIFFICULTY_OPTIONS = ["非常容易", "容易", "普通", "困難", "非常困難"]
+DIFFICULTY_OPTIONS = [
+    "非常容易",
+    "容易",
+    "普通",
+    "困難",
+    "非常困難",
+]
+
 DIFFICULTY_SCORE_MAP = {
     "非常容易": 1,
     "容易": 2,
@@ -288,7 +330,14 @@ DIFFICULTY_SCORE_MAP = {
     "非常困難": 5,
 }
 
-HELPFULNESS_OPTIONS = ["完全沒有幫助", "沒有幫助", "普通", "有幫助", "非常有幫助"]
+HELPFULNESS_OPTIONS = [
+    "完全沒有幫助",
+    "沒有幫助",
+    "普通",
+    "有幫助",
+    "非常有幫助",
+]
+
 HELPFULNESS_SCORE_MAP = {
     "完全沒有幫助": 1,
     "沒有幫助": 2,
@@ -298,10 +347,22 @@ HELPFULNESS_SCORE_MAP = {
 }
 
 OVERALL_QUESTIONS = [
-    ("overall_easy", "Q1：在本次標註過程中，我覺得判斷家貓情緒是容易的。"),
-    ("overall_intuition", "Q2：在本次標註過程中，我是依靠直覺判斷家貓情緒。"),
-    ("overall_explainable", "Q3：在本次標註過程中，我能明確說明自己為什麼選擇該情緒。"),
-    ("overall_observation_clarity", "Q4：在本次標註過程中，我能清楚知道應該優先觀察哪些部位來判斷情緒。"),
+    (
+        "overall_easy",
+        "Q1：在本次標註過程中，我覺得判斷家貓情緒是容易的。",
+    ),
+    (
+        "overall_intuition",
+        "Q2：在本次標註過程中，我是依靠直覺判斷家貓情緒。",
+    ),
+    (
+        "overall_explainable",
+        "Q3：在本次標註過程中，我能明確說明自己為什麼選擇該情緒。",
+    ),
+    (
+        "overall_observation_clarity",
+        "Q4：在本次標註過程中，我能清楚知道應該優先觀察哪些部位來判斷情緒。",
+    ),
 ]
 
 DATA_COLUMNS = [
@@ -316,6 +377,7 @@ DATA_COLUMNS = [
     "image_id",
     "difficulty",
     "condition",
+    "initial_emotion",
     "final_emotion",
     "confidence",
     "difficulty_score",
@@ -785,8 +847,19 @@ def render_background():
     st.markdown('<div class="main-title">受試者基本資料</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">請回答以下問題，作為後續分析的分組依據。</div>', unsafe_allow_html=True)
 
-    has_exp = st.radio("1. 您是否曾經養過貓？", ["是", "否"], index=None, key="bg_exp")
-    cur_own = st.radio("2. 您目前是否有養貓？", ["是", "否"], index=None, key="bg_own")
+    has_exp = st.radio(
+        "1. 您是否曾經養過貓？",
+        ["是", "否"],
+        index=None,
+        key="bg_exp",
+    )
+
+    cur_own = st.radio(
+        "2. 您目前是否有養貓？",
+        ["是", "否"],
+        index=None,
+        key="bg_own",
+    )
 
     bg = st.radio(
         "3. 您是否具有動物照護、獸醫、動物行為或相關背景？",
@@ -809,6 +882,7 @@ def render_background():
         horizontal=True,
         key="bg_understand",
     )
+
     understand = CAT_UNDERSTANDING_SCORE_MAP.get(understand_choice) if understand_choice else None
 
     ready = all(v is not None for v in [has_exp, cur_own, bg, emotion_knowledge, understand])
@@ -894,6 +968,7 @@ def render_task():
 
     st.markdown('<div class="version-badge">版本 B</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-title">🐱 家貓情緒標註</div>', unsafe_allow_html=True)
+
     st.markdown(
         f"""
         <div class="info-card" style="border-left-color:#e67e22;">
@@ -912,11 +987,12 @@ def render_task():
 
     # ── Step 1：先選擇初步情緒 ──
     st.markdown("## Step 1：選擇初步情緒")
+
     initial_emotion = st.radio(
         "請先根據照片，選擇您初步認為最符合的情緒",
         EMOTION_OPTIONS,
         index=None,
-        key=f"{prefix}_emotion",
+        key=f"{prefix}_initial_emotion",
         format_func=lambda x: f"{EMOTION_ICONS.get(x, '')} {x}",
     )
 
@@ -1016,6 +1092,7 @@ def render_task():
                     key=f"{prefix}_feat_{group_name}",
                     label_visibility="collapsed",
                 )
+
                 feature_selections[group_name] = selected
 
                 if "其他" in selected:
@@ -1092,6 +1169,7 @@ def render_task():
             '<div class="warn-card">請說明最終選擇「其他／無法判斷」的原因：</div>',
             unsafe_allow_html=True,
         )
+
         uncertain_reason = (
             st.radio(
                 "原因",
@@ -1114,6 +1192,7 @@ def render_task():
     if st.button("送出此張標註 →", type="primary", disabled=not required_ok):
         annotation_started_ts = st.session_state.task_start_time
         annotation_submitted_ts = time.time()
+
         annotation_time_seconds = (
             round(annotation_submitted_ts - annotation_started_ts, 2)
             if annotation_started_ts
@@ -1125,6 +1204,7 @@ def render_task():
             "image_id": image["image_id"],
             "difficulty": image["difficulty"],
             "condition": "情緒導向式部位特徵提示",
+            "initial_emotion": initial_emotion,
             "final_emotion": final_emotion,
             "confidence": confidence,
             "difficulty_score": difficulty_score,
@@ -1171,7 +1251,10 @@ def render_task():
 # 頁面 4：整體反饋問卷
 # ─────────────────────────────────────────────
 def render_overall_feedback():
-    st.markdown('<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="version-badge">版本 B：情緒導向式部位特徵提示</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown('<div class="main-title">📋 整體標註體驗反饋</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">以下題目請針對剛才所有照片的標註過程整體評估（非單張照片）。</div>',
@@ -1182,6 +1265,7 @@ def render_overall_feedback():
 
     for field, question in OVERALL_QUESTIONS:
         clean_q = question.rstrip("。")
+
         st.markdown(
             f'<div style="background:#fdf2e9;border:1.5px solid #f5cba7;border-radius:10px;'
             f'padding:16px 20px;margin-bottom:14px;">'
@@ -1198,6 +1282,7 @@ def render_overall_feedback():
             key=f"overall_{field}",
             label_visibility="collapsed",
         )
+
         scores[field] = LIKERT_SCORE_MAP.get(choice) if choice else None
 
     answered = sum(1 for v in scores.values() if v is not None)
@@ -1205,14 +1290,22 @@ def render_overall_feedback():
     complete = answered == total
 
     if complete:
-        st.markdown('<div class="complete-tip">✅ 所有題目已填答完畢！</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="complete-tip">✅ 所有題目已填答完畢！</div>',
+            unsafe_allow_html=True,
+        )
     else:
         st.markdown(
             f'<div class="progress-tip">已填答 {answered} / {total} 題。</div>',
             unsafe_allow_html=True,
         )
 
-    if st.button("完成標註，儲存資料 →", type="primary", disabled=not complete, use_container_width=True):
+    if st.button(
+        "完成標註，儲存資料 →",
+        type="primary",
+        disabled=not complete,
+        use_container_width=True,
+    ):
         final_records = []
 
         for rec in st.session_state.pending_records:
@@ -1255,6 +1348,7 @@ def render_done():
                 {col: r.get(col, "") for col in DATA_COLUMNS}
                 for r in st.session_state.get("final_records", [])
             ]
+
             ok, msg = sync_to_cloud(rows)
             st.session_state["last_save_message"] = msg
 
@@ -1262,6 +1356,7 @@ def render_done():
             st.session_state["last_save_message"] = f"CSV 已儲存，Google Sheet 同步失敗：{e}"
 
     msg = st.session_state.get("last_save_message", "")
+
     left, center, right = st.columns([1, 2.2, 1])
 
     with center:
@@ -1292,6 +1387,7 @@ def render_done():
                         {col: r.get(col, "") for col in DATA_COLUMNS}
                         for r in st.session_state.get("final_records", [])
                     ]
+
                     _, msg2 = sync_to_cloud(rows)
                     st.session_state["last_save_message"] = msg2
                     st.rerun()
